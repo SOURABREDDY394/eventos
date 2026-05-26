@@ -194,6 +194,38 @@ async function saveDraftToSupabase(draft: EventDraft) {
   return event.id as string;
 }
 
+function saveDraftToDemoStore(draft: EventDraft, organizerId: string) {
+  const event = store.createEvent({
+    organizer_id: organizerId,
+    title: draft.title.trim(),
+    slug: draft.slug || slugify(draft.title),
+    description: draft.description,
+    category: draft.category || 'General',
+    date: draft.date,
+    start_time: draft.start_time,
+    end_time: draft.end_time,
+    venue: draft.venue,
+    city: draft.city,
+    poster_url: null,
+    max_participants: draft.max_participants,
+    status: 'published',
+  });
+
+  store.saveEventFormFields(event.id, draft.formFields);
+  return event.id;
+}
+
+function canFallbackToDemoSave(err: unknown) {
+  const message = err instanceof Error ? err.message.toLowerCase() : '';
+  return (
+    message.includes('auth session missing') ||
+    message.includes('requires a real supabase auth organizer session') ||
+    message.includes('jwt') ||
+    message.includes('row-level security') ||
+    message.includes('violates row-level security')
+  );
+}
+
 export default function AICreateEvent() {
   const navigate = useNavigate();
   const user = store.getCurrentUser();
@@ -265,6 +297,12 @@ export default function AICreateEvent() {
       localStorage.removeItem(AI_PROMPT_KEY);
       navigate(`/dashboard/organizer/events/${eventId}`);
     } catch (err) {
+      if (canFallbackToDemoSave(err)) {
+        const eventId = saveDraftToDemoStore(draft, user.id);
+        localStorage.removeItem(AI_PROMPT_KEY);
+        navigate(`/dashboard/organizer/events/${eventId}`);
+        return;
+      }
       setError(err instanceof Error ? err.message : 'Event creation failed.');
     } finally {
       setSaving(false);
@@ -442,7 +480,7 @@ export default function AICreateEvent() {
 
               <div className="pt-3 flex flex-wrap gap-3">
                 <button onClick={() => void handleCreate()} disabled={saving} className="gold-btn text-sm disabled:opacity-60">
-                  {saving ? 'Creating in Supabase...' : 'Create Event'}
+                  {saving ? 'Creating Event...' : 'Create Event'}
                 </button>
                 <button onClick={() => void generateDraft()} className="ghost-btn rounded-full text-sm">Regenerate</button>
               </div>
