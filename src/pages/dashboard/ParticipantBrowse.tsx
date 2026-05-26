@@ -2,11 +2,11 @@ import { Link } from 'react-router';
 import { Calendar, MapPin, Ticket } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { EventPoster } from '@/components/EventPoster';
-import store from '@/data/store';
+import { useSyncedPublishedEvents } from '@/hooks/useSyncedEvents';
 import { getEventDisplayStatus } from '@/lib/eventLifecycle';
 
 export default function ParticipantBrowse() {
-  const events = store.getPublishedEvents();
+  const events = useSyncedPublishedEvents();
 
   return (
     <DashboardLayout title="Browse Events">

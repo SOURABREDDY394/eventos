@@ -2,13 +2,14 @@ import { useNavigate } from 'react-router';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { EventPoster } from '@/components/EventPoster';
 import store from '@/data/store';
+import { useSyncedPublishedEvents } from '@/hooks/useSyncedEvents';
 import { Award, Calendar, Clock, ClipboardList, HeartHandshake, MapPin, Shield, Sparkles, Wrench } from 'lucide-react';
 
 export default function VolunteerDashboard() {
   const navigate = useNavigate();
   const user = store.getCurrentUser();
   const stats = user ? store.getVolunteerStats(user.id) : { applications: 0, approvedApplications: 0, assignedTasks: 0, completedHours: 0, skillsEarned: 0, proofRecords: 0 };
-  const opportunities = store.getPublishedEvents().slice(0, 3);
+  const opportunities = useSyncedPublishedEvents().slice(0, 3);
 
   const statCards = [
     { icon: HeartHandshake, label: 'Applications Submitted', value: stats.applications, color: 'text-blue-400' },

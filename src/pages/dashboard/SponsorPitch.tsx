@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import store from '@/data/store';
+import { useSyncedPublishedEvents } from '@/hooks/useSyncedEvents';
 import { Wand2, Copy, Check } from 'lucide-react';
 
 export default function SponsorPitch() {
-  const events = store.getPublishedEvents();
+  const events = useSyncedPublishedEvents();
   const [eventId, setEventId] = useState('');
   const [sponsorType, setSponsorType] = useState('');
   const [company, setCompany] = useState('');

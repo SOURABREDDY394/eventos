@@ -5,6 +5,7 @@ import { Footer } from '@/components/Footer';
 import { EventPoster } from '@/components/EventPoster';
 import store from '@/data/store';
 import { demoUsers, useAuth } from '@/hooks/useAuth';
+import { useSyncedEventBySlug } from '@/hooks/useSyncedEvents';
 import { eventStatusBadgeClass, getEventDisplayStatus, isPastEvent } from '@/lib/eventLifecycle';
 import { Calendar, MapPin, Clock, ArrowLeft, CheckCircle, AlertCircle, FileText, Handshake, HeartHandshake } from 'lucide-react';
 import type { Profile, UserRole } from '@/types';
@@ -12,7 +13,7 @@ import type { Profile, UserRole } from '@/types';
 export default function EventDetail() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const event = store.getEventBySlug(slug || '');
+  const { event } = useSyncedEventBySlug(slug || '');
   const { user, continueAs } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string | boolean>>({});

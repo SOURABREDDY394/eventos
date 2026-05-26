@@ -4,13 +4,13 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { EventPoster } from '@/components/EventPoster';
 import store from '@/data/store';
+import { useSyncedEventLists } from '@/hooks/useSyncedEvents';
 import { eventStatusBadgeClass, getEventDisplayStatus } from '@/lib/eventLifecycle';
 import { Calendar, MapPin, Users } from 'lucide-react';
 
 export default function EventsPage() {
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
-  const upcomingEvents = store.getPublishedEvents();
-  const pastEvents = store.getPastPublishedEvents();
+  const { upcomingEvents, pastEvents } = useSyncedEventLists();
   const events = activeTab === 'upcoming' ? upcomingEvents : pastEvents;
 
   return (

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { EventPoster } from '@/components/EventPoster';
 import store from '@/data/store';
+import { useSyncedPublishedEvents } from '@/hooks/useSyncedEvents';
 import { Calendar, CheckCircle, HeartHandshake, MapPin, X } from 'lucide-react';
 import type { Event } from '@/types';
 
@@ -22,7 +23,7 @@ export default function VolunteerApplications() {
   const [error, setError] = useState('');
   const [version, setVersion] = useState(0);
 
-  const events = store.getPublishedEvents();
+  const events = useSyncedPublishedEvents();
   const applications = user ? store.getVolunteerApplicationsByUser(user.id) : [];
 
   const openApply = (event: Event) => {

@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { EventPoster } from '@/components/EventPoster';
 import store from '@/data/store';
+import { useSyncedPublishedEvents } from '@/hooks/useSyncedEvents';
 import { eventStatusBadgeClass, getEventDisplayStatus } from '@/lib/eventLifecycle';
 import { Calendar, MapPin, Users, Handshake, CheckCircle } from 'lucide-react';
 
 export default function SponsorEvents() {
   const user = store.getCurrentUser();
-  const events = store.getPublishedEvents();
+  const events = useSyncedPublishedEvents();
   const [submitted, setSubmitted] = useState<Set<string>>(new Set());
 
   const handleInterest = (eventId: string) => {
