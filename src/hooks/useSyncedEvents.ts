@@ -43,7 +43,7 @@ export function useSyncedEventBySlug(slug: string) {
 
     syncEventBySlugFromSupabase(slug)
       .then((syncedEvent) => {
-        if (active) setEvent(syncedEvent);
+        if (active && syncedEvent) setEvent(syncedEvent);
       })
       .catch((err) => {
         if (active) setSyncError(err instanceof Error ? err.message : 'Could not load this event.');
