@@ -321,8 +321,8 @@ async function saveDraftToSupabase(draft: EventDraft) {
   return event.id as string;
 }
 
-function saveDraftToDemoStore(draft: EventDraft, organizerId: string) {
-  const event = store.createEvent({
+function saveDraftToDemoStore(draft: EventDraft, organizerId: string, forcedEventId?: string) {
+  const eventInput = {
     organizer_id: organizerId,
     title: draft.title.trim(),
     slug: draft.slug || slugify(draft.title),
@@ -336,7 +336,11 @@ function saveDraftToDemoStore(draft: EventDraft, organizerId: string) {
     poster_url: null,
     max_participants: draft.max_participants,
     status: 'published',
-  });
+  } as const;
+
+  const event = forcedEventId
+    ? store.upsertEvent({ ...eventInput, id: forcedEventId, created_at: new Date().toISOString() })
+    : store.createEvent(eventInput);
 
   store.saveEventFormFields(event.id, draft.formFields);
   return event.id;
@@ -421,6 +425,7 @@ export default function AICreateEvent() {
     setSaving(true);
     try {
       const eventId = await saveDraftToSupabase(draft);
+      saveDraftToDemoStore(draft, user.id, eventId);
       localStorage.removeItem(AI_PROMPT_KEY);
       navigate(`/dashboard/organizer/events/${eventId}`);
     } catch (err) {

@@ -206,6 +206,17 @@ export const store = {
     setItem(STORAGE_KEYS.events, events);
     return newEvent;
   },
+  upsertEvent(event: Event): Event {
+    const events = store.getEvents();
+    const idx = events.findIndex(existing => existing.id === event.id);
+    if (idx === -1) {
+      events.push(event);
+    } else {
+      events[idx] = { ...events[idx], ...event };
+    }
+    setItem(STORAGE_KEYS.events, events);
+    return event;
+  },
   updateEvent(id: string, updates: Partial<Event>): Event | undefined {
     const events = store.getEvents();
     const idx = events.findIndex(e => e.id === id);

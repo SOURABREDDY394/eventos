@@ -7,21 +7,28 @@ function parseLocalDate(date: string) {
   return new Date(year, (month || 1) - 1, day || 1);
 }
 
+function isValidLocalDate(date: Date) {
+  return !Number.isNaN(date.getTime());
+}
+
 function todayLocalDate() {
   const now = new Date();
   return new Date(now.getFullYear(), now.getMonth(), now.getDate());
 }
 
 export function isPastEvent(eventDate: string) {
-  return parseLocalDate(eventDate).getTime() < todayLocalDate().getTime();
+  const date = parseLocalDate(eventDate);
+  return isValidLocalDate(date) ? date.getTime() < todayLocalDate().getTime() : false;
 }
 
 export function isTodayEvent(eventDate: string) {
-  return parseLocalDate(eventDate).getTime() === todayLocalDate().getTime();
+  const date = parseLocalDate(eventDate);
+  return isValidLocalDate(date) ? date.getTime() === todayLocalDate().getTime() : false;
 }
 
 export function isUpcomingEvent(eventDate: string) {
-  return parseLocalDate(eventDate).getTime() >= todayLocalDate().getTime();
+  const date = parseLocalDate(eventDate);
+  return isValidLocalDate(date) ? date.getTime() >= todayLocalDate().getTime() : true;
 }
 
 export function getEventDisplayStatus(event: Event): EventDisplayStatus {
