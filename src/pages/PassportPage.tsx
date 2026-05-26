@@ -120,19 +120,19 @@ export default function PassportPage() {
               </div>
             </div>
 
-            <aside className="relative rounded-[2.25rem] bg-[#10120B] text-white p-6 sm:p-8 shadow-[0_24px_70px_rgba(35,40,20,0.18)] overflow-hidden">
+            <aside className="relative rounded-[2.25rem] bg-[#10120B] p-6 sm:p-8 shadow-[0_24px_70px_rgba(35,40,20,0.18)] overflow-hidden">
               <div className="absolute right-0 top-0 h-72 w-72 rounded-full bg-[#D8F066]/16 blur-3xl" />
               <div className="relative">
                 <div className="flex items-center justify-between gap-4 mb-10">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/8 px-4 py-2 text-sm font-black text-[#D8F066]">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-[#F8FAEF]/15 bg-[#F8FAEF]/[0.08] px-4 py-2 text-sm font-black text-[#D8F066]">
                     <Shield className="w-4 h-4" />
                     EventOS verified
                   </div>
-                  <Globe2 className="w-6 h-6 text-white/45" />
+                  <Globe2 className="w-6 h-6 text-[#E9EDCF]/60" />
                 </div>
                 <p className="text-xs font-black tracking-[0.24em] text-[#D8F066] uppercase">What this proves</p>
-                <h2 className="mt-3 text-3xl sm:text-5xl font-black leading-tight">A public record of real event participation.</h2>
-                <p className="mt-5 text-sm sm:text-base leading-7 text-white/58">
+                <h2 className="mt-3 text-3xl sm:text-5xl font-black leading-tight text-[#FFFDF2]">A public record of real event participation.</h2>
+                <p className="mt-5 text-sm sm:text-base leading-7 text-[#D9DDC6]">
                   Records appear here only after organizer actions like approved attendance, issued certificates, or verified volunteer task completion.
                 </p>
 
@@ -142,9 +142,9 @@ export default function PassportPage() {
                     'QR attendance and certificates create verified records',
                     'Volunteer hours and skills appear after completed tasks',
                   ].map(item => (
-                    <div key={item} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/7 p-4">
+                    <div key={item} className="flex items-start gap-3 rounded-2xl border border-[#F8FAEF]/15 bg-[#F8FAEF]/[0.07] p-4">
                       <CheckCircle className="w-5 h-5 text-[#D8F066] flex-shrink-0 mt-0.5" />
-                      <p className="text-sm leading-6 text-white/76">{item}</p>
+                      <p className="text-sm leading-6 text-[#EEF2D8]">{item}</p>
                     </div>
                   ))}
                 </div>
