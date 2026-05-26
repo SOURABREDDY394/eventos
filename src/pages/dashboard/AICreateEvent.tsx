@@ -4,6 +4,7 @@ import { Bot, Calendar, CheckCircle2, ClipboardList, Handshake, Loader2, QrCode,
 import { DashboardLayout } from '@/components/DashboardLayout';
 import store from '@/data/store';
 import type { EventFormField } from '@/types';
+import { requireSupabase } from '@/lib/supabase';
 
 type DraftField = Omit<EventFormField, 'id' | 'event_id' | 'created_at'>;
 
@@ -20,9 +21,10 @@ type EventDraft = {
   max_participants: number;
   formFields: DraftField[];
   volunteerRoles: Array<{ role_name: string; description: string; required_count: number; skills: string[] }>;
-  sponsorPackages: string[];
-  budgetCategories: string[];
+  sponsorPackages: Array<{ title: string; description: string; benefits: string[] }>;
+  budgetCategories: Array<{ type: 'income' | 'expense'; title: string }>;
   certificateSetup: string;
+  certificateEnabled: boolean;
   analysis: {
     foundEventType: string;
     foundDate: boolean;
@@ -30,197 +32,166 @@ type EventDraft = {
   };
 };
 
+type EdgeRegistrationField = {
+  label?: string;
+  field_type?: DraftField['field_type'];
+  required?: boolean;
+  options?: string[];
+};
+
+type EdgeEventDraft = {
+  title?: string;
+  category?: string;
+  description?: string;
+  event_date?: string;
+  start_time?: string;
+  end_time?: string;
+  venue?: string;
+  city?: string;
+  max_participants?: number;
+  registration_fields?: EdgeRegistrationField[];
+  volunteer_roles?: Array<{ role?: string; description?: string }>;
+  sponsor_packages?: Array<{ title?: string; description?: string; benefits?: string[] }>;
+  budget_categories?: Array<{ type?: 'income' | 'expense'; title?: string }>;
+  certificate_enabled?: boolean;
+  warnings?: string[];
+};
+
 const defaultPrompt = 'Create a 100-seat AI workshop in Hyderabad with registration form, volunteer support, QR check-in, and certificates.';
 const AI_PROMPT_KEY = 'eventos_ai_prompt';
+const timezone = 'Asia/Kolkata';
 
 function slugify(value: string) {
   return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }
 
-function formatDateInput(date: Date) {
+function getCurrentDate() {
+  const date = new Date();
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
 
-const monthIndexes: Record<string, number> = {
-  january: 0,
-  jan: 0,
-  february: 1,
-  feb: 1,
-  march: 2,
-  mar: 2,
-  april: 3,
-  apr: 3,
-  may: 4,
-  june: 5,
-  jun: 5,
-  july: 6,
-  jul: 6,
-  august: 7,
-  aug: 7,
-  september: 8,
-  sep: 8,
-  sept: 8,
-  october: 9,
-  oct: 9,
-  november: 10,
-  nov: 10,
-  december: 11,
-  dec: 11,
-};
-
-function titleCase(value: string) {
-  return value
-    .trim()
-    .replace(/\s+/g, ' ')
-    .split(' ')
-    .map(word => word ? `${word[0].toUpperCase()}${word.slice(1).toLowerCase()}` : word)
-    .join(' ');
-}
-
-function parsePromptDate(prompt: string) {
-  const lower = prompt.toLowerCase();
-  const monthPattern = Object.keys(monthIndexes).join('|');
-  const dayFirst = lower.match(new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(${monthPattern})\\b`));
-  const monthFirst = lower.match(new RegExp(`\\b(${monthPattern})\\s+(\\d{1,2})(?:st|nd|rd|th)?\\b`));
-
-  const day = dayFirst ? Number(dayFirst[1]) : monthFirst ? Number(monthFirst[2]) : null;
-  const monthName = dayFirst ? dayFirst[2] : monthFirst ? monthFirst[1] : null;
-  if (!day || !monthName || day < 1 || day > 31) return '';
-
-  const today = new Date();
-  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const month = monthIndexes[monthName];
-  let candidate = new Date(today.getFullYear(), month, day);
-  if (candidate < startOfToday) candidate = new Date(today.getFullYear() + 1, month, day);
-  return formatDateInput(candidate);
-}
-
-function inferEvent(prompt: string) {
-  const lower = prompt.toLowerCase();
-  if (/\b(pubg|bgmi|free fire|esports|e-sports|gaming)\b/.test(lower)) {
-    const title = lower.includes('pubg') ? 'PUBG Tournament' : lower.includes('bgmi') ? 'BGMI Tournament' : 'Esports Tournament';
-    return { title, category: 'Gaming / Esports', kind: 'gaming', found: title };
-  }
-  if (/\b(ai|artificial intelligence|machine learning|ml|gen ai|genai)\b/.test(lower)) {
-    return { title: 'AI Workshop', category: 'Technology / AI', kind: 'ai', found: 'AI workshop' };
-  }
-  if (/\b(hackathon|coding)\b/.test(lower)) {
-    const title = /\b24\s*(?:hour|hr)\b/.test(lower) ? '24-Hour Hackathon' : 'Hackathon';
-    return { title, category: 'Hackathon / Technology', kind: 'hackathon', found: title };
-  }
-  if (/\b(web dev|web development|frontend|full stack|fullstack)\b/.test(lower)) {
-    return { title: 'Web Development Bootcamp', category: 'Technology', kind: 'workshop', found: 'Web development' };
-  }
-  if (/\b(startup|business|entrepreneur)\b/.test(lower)) {
-    return { title: 'Startup Event', category: 'Entrepreneurship', kind: 'business', found: 'Startup / business' };
-  }
-  if (/\b(cultural|dance|music|singing|concert)\b/.test(lower)) {
-    return { title: 'Cultural Event', category: 'Cultural', kind: 'cultural', found: 'Cultural event' };
-  }
-  if (/\bsports?\b/.test(lower)) {
-    return { title: 'Sports Event', category: 'Sports', kind: 'sports', found: 'Sports event' };
-  }
-  return null;
-}
-
-function inferCity(prompt: string) {
-  const known = ['Hyderabad', 'Bengaluru', 'Bangalore', 'Mumbai', 'Delhi', 'Pune', 'Chennai', 'Kolkata', 'Noida', 'Gurgaon', 'Gurugram', 'Ahmedabad', 'Jaipur'];
-  const knownCity = known.find(city => new RegExp(`\\b${city}\\b`, 'i').test(prompt));
-  if (knownCity) return knownCity === 'Bangalore' ? 'Bengaluru' : knownCity;
-
-  const cityMatch = prompt.match(/\bin\s+([a-zA-Z ]+?)(?=\s+(?:on|at|for|with|from|and|having|including|where|which)\b|,|\.|$)/i);
-  if (!cityMatch?.[1]) return '';
-
-  const city = cityMatch[1].trim().replace(/\s+/g, ' ');
-  if (city.length < 2 || /\b(event|workshop|hackathon|tournament|students?|participants?)\b/i.test(city)) return '';
-  return titleCase(city);
-}
-
-function inferVenue(prompt: string) {
-  const venueMatch = prompt.match(/\b(?:venue|at)\s+(?:the\s+)?([a-zA-Z0-9 &'-]+?(?:auditorium|hall|arena|ground|stadium|campus|center|centre|room|lab|club|cafe))\b/i);
-  return venueMatch?.[1] ? titleCase(venueMatch[1]) : 'To be announced';
-}
-
-function inferCapacity(prompt: string, kind: string) {
-  const match = prompt.match(/(\d{1,5})\s*(?:seat|seats|person|people|student|students|participant|participants|attendee|attendees|player|players)/i);
-  if (match) return Number(match[1]);
-  return kind === 'gaming' || kind === 'sports' || kind === 'cultural' ? 50 : 100;
-}
-
-function descriptionFor(event: NonNullable<ReturnType<typeof inferEvent>>, maxParticipants: number, city: string) {
-  const locationText = city ? ` in ${city}` : '';
-  if (event.kind === 'gaming') {
-    return `${event.title} is a competitive gaming event where participants compete in structured matches${locationText}. Registrations require organizer approval, and approved players receive event access details.`;
-  }
-  if (event.kind === 'ai') {
-    return `${event.title} is a hands-on learning event for ${maxParticipants} participants${locationText}. Participants apply through a registration form, organizers approve attendees, and approved participants receive QR tickets for verified check-in.`;
-  }
-  if (event.kind === 'hackathon') {
-    return `${event.title} is a build-focused event for ${maxParticipants} participants${locationText}. Teams or individuals submit applications, organizers approve participants, and attendance can be verified for certificates and Proof Passport records.`;
-  }
-  return `${event.title} is an organized event for ${maxParticipants} participants${locationText}. Registration requires organizer approval, approved attendees receive QR tickets, and verified participation can become certificates and proof records.`;
-}
-
-function buildDraft(prompt: string): EventDraft {
-  const lower = prompt.toLowerCase();
-  const event = inferEvent(prompt);
-  const warnings: string[] = [];
-
-  if (!event) {
-    warnings.push('Event type was not clear. What type of event do you want to create?');
-  }
-
-  const city = inferCity(prompt);
-  if (!city) warnings.push('City was not found. You can leave it empty or add a city.');
-
-  const venue = inferVenue(prompt);
-  if (venue === 'To be announced') warnings.push('Venue was not found. Venue is set to To be announced.');
-
-  const date = parsePromptDate(prompt);
-  if (!date) warnings.push('Date was not found. Please choose a date.');
-
-  const fallbackEvent = event ?? { title: 'Untitled Event', category: '', kind: 'unknown', found: '' };
-  const maxParticipants = inferCapacity(prompt, fallbackEvent.kind);
-  const needsSponsors = lower.includes('sponsor');
-  const needsVolunteers = lower.includes('volunteer') || maxParticipants >= 100 || fallbackEvent.kind === 'gaming';
+function toDraft(edgeDraft: EdgeEventDraft): EventDraft {
+  const title = (edgeDraft.title || '').trim();
+  const category = (edgeDraft.category || '').trim();
+  const fields = Array.isArray(edgeDraft.registration_fields) ? edgeDraft.registration_fields : [];
+  const warnings = Array.isArray(edgeDraft.warnings) ? edgeDraft.warnings.filter(Boolean) : [];
 
   return {
-    title: fallbackEvent.title,
-    slug: slugify(`${fallbackEvent.title}-${Date.now().toString().slice(-4)}`),
-    description: event ? descriptionFor(event, maxParticipants, city) : '',
-    category: fallbackEvent.category,
-    date,
-    start_time: '10:00',
-    end_time: '16:00',
-    venue,
-    city,
-    max_participants: maxParticipants,
-    formFields: [
-      { label: 'Full Name', field_type: 'text', required: true, options: [], sort_order: 0 },
-      { label: 'Email', field_type: 'email', required: true, options: [], sort_order: 1 },
-      { label: 'Phone Number', field_type: 'phone', required: true, options: [], sort_order: 2 },
-      { label: 'College / Organization', field_type: 'text', required: true, options: [], sort_order: 3 },
-      { label: 'Why do you want to attend?', field_type: 'textarea', required: true, options: [], sort_order: 4 },
-      { label: 'Need certificate?', field_type: 'select', required: false, options: ['Yes', 'No'], sort_order: 5 },
-    ],
-    volunteerRoles: needsVolunteers ? [
-      { role_name: fallbackEvent.kind === 'gaming' ? 'Match Desk' : 'Registration Desk', description: fallbackEvent.kind === 'gaming' ? 'Coordinate player check-in, match slots, and event flow.' : 'Verify approved registrations and guide attendees at check-in.', required_count: 2, skills: ['Communication', 'Check-in Ops'] },
-      { role_name: fallbackEvent.kind === 'gaming' ? 'Score Coordinator' : 'Venue Support', description: fallbackEvent.kind === 'gaming' ? 'Track match results and support tournament operations.' : 'Support room flow, seating, and participant assistance.', required_count: 2, skills: ['Event Operations', 'Coordination'] },
-    ] : [],
-    sponsorPackages: needsSponsors ? ['Community Partner', fallbackEvent.kind === 'gaming' ? 'Esports Partner' : 'Workshop Partner', 'Certificate Partner'] : ['Community Partner'],
-    budgetCategories: fallbackEvent.kind === 'gaming'
-      ? ['Venue', 'Gaming Setup', 'Prize Pool', 'Operations', 'Promotion']
-      : ['Venue', 'Food & Beverages', 'Certificates', 'Operations', 'Promotion'],
-    certificateSetup: 'Certificates are prepared for attended participants after organizer verification.',
+    title,
+    slug: slugify(`${title || 'event'}-${Date.now().toString().slice(-4)}`),
+    description: edgeDraft.description || '',
+    category,
+    date: edgeDraft.event_date || '',
+    start_time: edgeDraft.start_time || '10:00',
+    end_time: edgeDraft.end_time || '16:00',
+    venue: edgeDraft.venue || 'To be announced',
+    city: edgeDraft.city || '',
+    max_participants: Number(edgeDraft.max_participants) || 0,
+    formFields: fields.map((field, index) => ({
+      label: field.label || `Question ${index + 1}`,
+      field_type: field.field_type || 'text',
+      required: Boolean(field.required),
+      options: Array.isArray(field.options) ? field.options : [],
+      sort_order: index,
+    })),
+    volunteerRoles: (edgeDraft.volunteer_roles || []).map(role => ({
+      role_name: role.role || 'Volunteer',
+      description: role.description || '',
+      required_count: 1,
+      skills: [],
+    })),
+    sponsorPackages: (edgeDraft.sponsor_packages || []).map(pkg => ({
+      title: pkg.title || 'Sponsor Package',
+      description: pkg.description || '',
+      benefits: Array.isArray(pkg.benefits) ? pkg.benefits : [],
+    })),
+    budgetCategories: (edgeDraft.budget_categories || []).map(category => ({
+      type: category.type === 'income' ? 'income' : 'expense',
+      title: category.title || 'Budget item',
+    })),
+    certificateEnabled: edgeDraft.certificate_enabled !== false,
+    certificateSetup: edgeDraft.certificate_enabled === false
+      ? 'Certificates are disabled for this draft.'
+      : 'Certificates are prepared for attended participants after organizer verification.',
     analysis: {
-      foundEventType: fallbackEvent.found,
-      foundDate: Boolean(date),
+      foundEventType: title || 'Review needed',
+      foundDate: Boolean(edgeDraft.event_date),
       warnings,
     },
   };
+}
+
+async function generateDraftFromGroq(prompt: string) {
+  const supabase = requireSupabase();
+  const { data, error } = await supabase.functions.invoke<EdgeEventDraft>('generate-event-draft', {
+    body: {
+      prompt,
+      currentDate: getCurrentDate(),
+      timezone,
+    },
+  });
+
+  if (error) {
+    throw new Error(error.message || 'AI event generation is not configured or failed. Please try manual event creation.');
+  }
+
+  if (!data) {
+    throw new Error('AI event generation returned no draft. Please try manual event creation.');
+  }
+
+  return toDraft(data);
+}
+
+async function saveDraftToSupabase(draft: EventDraft) {
+  const supabase = requireSupabase();
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError) throw new Error(authError.message);
+  if (!authData.user) {
+    throw new Error('Creating events in Supabase requires a real Supabase Auth organizer session. The current one-click demo login is local only.');
+  }
+
+  const { data: event, error: eventError } = await supabase
+    .from('events')
+    .insert({
+      organizer_id: authData.user.id,
+      title: draft.title.trim(),
+      slug: draft.slug || slugify(draft.title),
+      description: draft.description,
+      category: draft.category || 'General',
+      date: draft.date,
+      start_time: draft.start_time || null,
+      end_time: draft.end_time || null,
+      venue: draft.venue || null,
+      city: draft.city || null,
+      poster_url: null,
+      max_participants: draft.max_participants,
+      status: 'published',
+    })
+    .select('id')
+    .single();
+
+  if (eventError) throw new Error(eventError.message);
+  if (!event?.id) throw new Error('Supabase did not return the created event id.');
+
+  if (draft.formFields.length > 0) {
+    const { error: fieldsError } = await supabase
+      .from('event_form_fields')
+      .insert(draft.formFields.map(field => ({
+        event_id: event.id,
+        label: field.label,
+        field_type: field.field_type,
+        required: field.required,
+        options: field.options,
+        sort_order: field.sort_order,
+      })));
+
+    if (fieldsError) throw new Error(fieldsError.message);
+  }
+
+  return event.id as string;
 }
 
 export default function AICreateEvent() {
@@ -229,14 +200,16 @@ export default function AICreateEvent() {
   const [prompt, setPrompt] = useState(defaultPrompt);
   const [draft, setDraft] = useState<EventDraft | null>(null);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     const pendingPrompt = localStorage.getItem(AI_PROMPT_KEY);
     if (pendingPrompt) {
       setPrompt(pendingPrompt);
-      setDraft(buildDraft(pendingPrompt));
+      void generateDraft(pendingPrompt);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const outputItems = useMemo(() => [
@@ -248,28 +221,30 @@ export default function AICreateEvent() {
     { icon: Calendar, label: 'Certificate setup prepared' },
   ], []);
 
-  const generateDraft = () => {
+  const generateDraft = async (promptOverride = prompt) => {
     setError('');
-    if (!prompt.trim()) {
+    const promptToGenerate = promptOverride.trim();
+    if (!promptToGenerate) {
       setError('Describe the event you want to create.');
       return;
     }
-    if (!inferEvent(prompt)) {
-      setError('What type of event do you want to create? Try examples like PUBG event, AI workshop, hackathon, cultural event, or sports event.');
-      return;
-    }
     setLoading(true);
-    window.setTimeout(() => {
-      setDraft(buildDraft(prompt));
+    try {
+      const nextDraft = await generateDraftFromGroq(promptToGenerate);
+      setDraft(nextDraft);
+    } catch (err) {
+      setDraft(null);
+      setError(err instanceof Error ? err.message : 'AI event generation is not configured or failed. Please try manual event creation.');
+    } finally {
       setLoading(false);
-    }, 450);
+    }
   };
 
   const updateDraft = <K extends keyof EventDraft>(key: K, value: EventDraft[K]) => {
     setDraft(prev => prev ? { ...prev, [key]: value } : prev);
   };
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     setError('');
     if (!user) {
       navigate('/login');
@@ -284,26 +259,16 @@ export default function AICreateEvent() {
       return;
     }
 
-    const event = store.createEvent({
-      organizer_id: user.id,
-      title: draft.title.trim(),
-      slug: draft.slug || slugify(draft.title),
-      description: draft.description,
-      category: draft.category,
-      date: draft.date,
-      start_time: draft.start_time,
-      end_time: draft.end_time,
-      venue: draft.venue,
-      city: draft.city,
-      poster_url: null,
-      max_participants: draft.max_participants,
-      status: 'published',
-    });
-
-    store.saveEventFormFields(event.id, draft.formFields);
-    draft.volunteerRoles.forEach(role => store.createVolunteerRole({ event_id: event.id, ...role }));
-    localStorage.removeItem(AI_PROMPT_KEY);
-    navigate(`/dashboard/organizer/events/${event.id}`);
+    setSaving(true);
+    try {
+      const eventId = await saveDraftToSupabase(draft);
+      localStorage.removeItem(AI_PROMPT_KEY);
+      navigate(`/dashboard/organizer/events/${eventId}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Event creation failed.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -316,7 +281,7 @@ export default function AICreateEvent() {
             </span>
             <div>
               <p className="text-base font-black text-[#14150F]">Create an event by chatting</p>
-              <p className="text-xs text-[#5E6256]">Local deterministic builder is active. No Groq key is exposed in Vite.</p>
+              <p className="text-xs text-[#5E6256]">Groq runs securely through a Supabase Edge Function. No Groq key is exposed in Vite.</p>
             </div>
           </div>
 
@@ -334,7 +299,7 @@ export default function AICreateEvent() {
           {error && <p className="mb-4 text-sm text-red-500">{error}</p>}
 
           <div className="flex flex-wrap gap-3">
-            <button onClick={generateDraft} disabled={loading} className="gold-btn text-sm disabled:opacity-60 flex items-center gap-2">
+            <button onClick={() => void generateDraft()} disabled={loading} className="gold-btn text-sm disabled:opacity-60 flex items-center gap-2">
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
               Generate Event Draft
             </button>
@@ -466,17 +431,20 @@ export default function AICreateEvent() {
                 <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
                   <p className="text-sm font-semibold text-white mb-3">Support Setup</p>
                   <div className="space-y-3 text-xs text-white/55">
-                    <p><span className="text-[#E49B3A]">Volunteer roles:</span> {draft.volunteerRoles.length ? draft.volunteerRoles.map(role => role.role_name).join(', ') : 'No volunteer roles requested'}</p>
-                    <p><span className="text-[#E49B3A]">Sponsor packages:</span> {draft.sponsorPackages.join(', ')}</p>
-                    <p><span className="text-[#E49B3A]">Budget:</span> {draft.budgetCategories.join(', ')}</p>
+                    <p><span className="text-[#E49B3A]">Volunteer role suggestions:</span> {draft.volunteerRoles.length ? draft.volunteerRoles.map(role => role.role_name).join(', ') : 'No volunteer roles suggested'}</p>
+                    <p><span className="text-[#E49B3A]">Sponsor package suggestions:</span> {draft.sponsorPackages.length ? draft.sponsorPackages.map(pkg => pkg.title).join(', ') : 'No sponsor packages suggested'}</p>
+                    <p><span className="text-[#E49B3A]">Budget categories:</span> {draft.budgetCategories.length ? draft.budgetCategories.map(item => `${item.type}: ${item.title}`).join(', ') : 'No budget categories suggested'}</p>
                     <p><span className="text-[#E49B3A]">Certificate:</span> {draft.certificateSetup}</p>
+                    <p className="text-[11px] text-white/35">Suggestions are shown for review and are not saved automatically.</p>
                   </div>
                 </div>
               </div>
 
               <div className="pt-3 flex flex-wrap gap-3">
-                <button onClick={handleCreate} className="gold-btn text-sm">Create Event</button>
-                <button onClick={generateDraft} className="ghost-btn rounded-full text-sm">Regenerate</button>
+                <button onClick={() => void handleCreate()} disabled={saving} className="gold-btn text-sm disabled:opacity-60">
+                  {saving ? 'Creating in Supabase...' : 'Create Event'}
+                </button>
+                <button onClick={() => void generateDraft()} className="ghost-btn rounded-full text-sm">Regenerate</button>
               </div>
             </div>
           )}
