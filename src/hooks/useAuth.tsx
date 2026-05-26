@@ -112,13 +112,10 @@ function clearDemoUser() {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [demoUser, setDemoUser] = useState<DemoUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [demoUser, setDemoUser] = useState<DemoUser | null>(() => readDemoUser());
+  const [loading] = useState(false);
 
   useEffect(() => {
-    setDemoUser(readDemoUser());
-    setLoading(false);
-
     const handleStorage = () => setDemoUser(readDemoUser());
     window.addEventListener('storage', handleStorage);
     return () => window.removeEventListener('storage', handleStorage);

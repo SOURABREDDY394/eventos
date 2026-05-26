@@ -17,7 +17,7 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dashboardOpen, setDashboardOpen] = useState(false);
   const location = useLocation();
-  const { user, loading, continueAs } = useAuth();
+  const { user, continueAs } = useAuth();
   const isPublicSurface = !location.pathname.startsWith('/dashboard');
 
   if (!isPublicSurface) return null;
@@ -82,9 +82,7 @@ export function Navbar() {
 
             <div className="hidden md:flex items-center gap-3">
               <Link to="/events" className="rounded-full border border-[#DDE3CA] px-4 py-2 text-sm font-bold text-[#52670F] hover:bg-[#F2F6E7] transition-colors">Events</Link>
-              {loading ? (
-                <span className="text-xs text-[#667055]">Loading...</span>
-              ) : user ? (
+              {user ? (
                 <button
                   onClick={() => setDashboardOpen(open => !open)}
                   className="rounded-full bg-[#52670F] px-5 py-2 text-sm font-black text-white"
@@ -96,7 +94,7 @@ export function Navbar() {
                   to="/login"
                   className="rounded-full bg-[#52670F] px-5 py-2 text-sm font-black text-white"
                 >
-                  Login
+                  Dashboard
                 </Link>
               )}
             </div>
@@ -121,7 +119,7 @@ export function Navbar() {
                 </>
               ) : (
                 <Link to="/login" className="block w-full rounded-full bg-[#52670F] px-5 py-2 text-center text-sm font-black text-white">
-                  Login
+                  Dashboard
                 </Link>
               )}
             </div>
