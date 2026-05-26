@@ -82,21 +82,12 @@ export function Navbar() {
 
             <div className="hidden md:flex items-center gap-3">
               <Link to="/events" className="rounded-full border border-[#DDE3CA] px-4 py-2 text-sm font-bold text-[#52670F] hover:bg-[#F2F6E7] transition-colors">Events</Link>
-              {user ? (
-                <button
-                  onClick={() => setDashboardOpen(open => !open)}
-                  className="rounded-full bg-[#52670F] px-5 py-2 text-sm font-black text-white"
-                >
-                  Dashboard
-                </button>
-              ) : (
-                <Link
-                  to="/login"
-                  className="rounded-full bg-[#52670F] px-5 py-2 text-sm font-black text-white"
-                >
-                  Dashboard
-                </Link>
-              )}
+              <button
+                onClick={() => setDashboardOpen(open => !open)}
+                className="rounded-full bg-[#52670F] px-5 py-2 text-sm font-black text-white"
+              >
+                Dashboard
+              </button>
             </div>
 
             <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden text-[#1F2416]">
@@ -107,21 +98,13 @@ export function Navbar() {
           {mobileOpen && (
             <div className="md:hidden px-5 pb-5 space-y-3">
               <Link to="/events" className="block rounded-full border border-[#DDE3CA] px-4 py-2 text-center text-sm font-bold text-[#52670F]">Events</Link>
-              {user ? (
-                <>
-                  <button
-                    onClick={() => setDashboardOpen(open => !open)}
-                    className="block w-full rounded-full bg-[#52670F] px-5 py-2 text-center text-sm font-black text-white"
-                  >
-                    Dashboard Options
-                  </button>
-                  {dashboardOpen && <div className="pt-2">{rolePanel}</div>}
-                </>
-              ) : (
-                <Link to="/login" className="block w-full rounded-full bg-[#52670F] px-5 py-2 text-center text-sm font-black text-white">
-                  Dashboard
-                </Link>
-              )}
+              <button
+                onClick={() => setDashboardOpen(open => !open)}
+                className="block w-full rounded-full bg-[#52670F] px-5 py-2 text-center text-sm font-black text-white"
+              >
+                Dashboard Options
+              </button>
+              {dashboardOpen && <div className="pt-2">{rolePanel}</div>}
             </div>
           )}
         </div>

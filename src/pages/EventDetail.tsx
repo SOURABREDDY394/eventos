@@ -44,8 +44,7 @@ export default function EventDetail() {
 
   const ensureRole = (role: UserRole): Profile | null => {
     if (!user) {
-      navigate('/login');
-      return null;
+      return continueAs(role);
     }
     if (user.role === role) return user;
     return continueAs(role);
