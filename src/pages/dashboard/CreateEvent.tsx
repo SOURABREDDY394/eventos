@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import store from '@/data/store';
-import { uploadEventPoster } from '@/lib/eventPosterUpload';
+import { createLocalPosterDataUrl, uploadEventPoster } from '@/lib/eventPosterUpload';
 import { ImagePlus, X } from 'lucide-react';
 
 export default function CreateEvent() {
@@ -51,7 +51,14 @@ export default function CreateEvent() {
     setSubmitting(true);
 
     try {
-      const posterUrl = posterFile ? await uploadEventPoster(posterFile, user.id) : null;
+      let posterUrl: string | null = null;
+      if (posterFile) {
+        try {
+          posterUrl = await uploadEventPoster(posterFile, user.id);
+        } catch {
+          posterUrl = await createLocalPosterDataUrl(posterFile);
+        }
+      }
       store.createEvent({
         organizer_id: user.id,
         title,

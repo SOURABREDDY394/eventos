@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { EventPoster } from '@/components/EventPoster';
 import store from '@/data/store';
-import { uploadEventPoster } from '@/lib/eventPosterUpload';
+import { createLocalPosterDataUrl, uploadEventPoster } from '@/lib/eventPosterUpload';
 import { eventStatusBadgeClass, getEventDisplayStatus } from '@/lib/eventLifecycle';
 import { Users, QrCode, UserCheck, Award, Handshake, Wallet, ArrowRight, Calendar, MapPin, FileText, Plus, Trash2, ImagePlus, X } from 'lucide-react';
 import type { EventFormField } from '@/types';
@@ -110,10 +110,17 @@ export default function EventManage() {
     setPosterError('');
     setPosterSuccess('');
     try {
-      const posterUrl = await uploadEventPoster(posterFile, organizer.id);
+      let posterUrl = '';
+      let savedLocally = false;
+      try {
+        posterUrl = await uploadEventPoster(posterFile, organizer.id);
+      } catch {
+        posterUrl = await createLocalPosterDataUrl(posterFile);
+        savedLocally = true;
+      }
       store.updateEvent(event.id, { poster_url: posterUrl });
       handlePosterChange();
-      setPosterSuccess('Poster updated.');
+      setPosterSuccess(savedLocally ? 'Poster saved for this demo workspace.' : 'Poster uploaded and updated.');
     } catch (err) {
       setPosterError(err instanceof Error ? err.message : 'Poster upload failed. Please try again.');
     } finally {
