@@ -23,68 +23,179 @@ type EventDraft = {
   sponsorPackages: string[];
   budgetCategories: string[];
   certificateSetup: string;
+  analysis: {
+    foundEventType: string;
+    foundDate: boolean;
+    warnings: string[];
+  };
 };
 
 const defaultPrompt = 'Create a 100-seat AI workshop in Hyderabad with registration form, volunteer support, QR check-in, and certificates.';
 const AI_PROMPT_KEY = 'eventos_ai_prompt';
 
-function nextDate(daysAhead = 14) {
-  const date = new Date();
-  date.setDate(date.getDate() + daysAhead);
-  return date.toISOString().slice(0, 10);
-}
-
 function slugify(value: string) {
   return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }
 
+function formatDateInput(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+const monthIndexes: Record<string, number> = {
+  january: 0,
+  jan: 0,
+  february: 1,
+  feb: 1,
+  march: 2,
+  mar: 2,
+  april: 3,
+  apr: 3,
+  may: 4,
+  june: 5,
+  jun: 5,
+  july: 6,
+  jul: 6,
+  august: 7,
+  aug: 7,
+  september: 8,
+  sep: 8,
+  sept: 8,
+  october: 9,
+  oct: 9,
+  november: 10,
+  nov: 10,
+  december: 11,
+  dec: 11,
+};
+
+function titleCase(value: string) {
+  return value
+    .trim()
+    .replace(/\s+/g, ' ')
+    .split(' ')
+    .map(word => word ? `${word[0].toUpperCase()}${word.slice(1).toLowerCase()}` : word)
+    .join(' ');
+}
+
+function parsePromptDate(prompt: string) {
+  const lower = prompt.toLowerCase();
+  const monthPattern = Object.keys(monthIndexes).join('|');
+  const dayFirst = lower.match(new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(${monthPattern})\\b`));
+  const monthFirst = lower.match(new RegExp(`\\b(${monthPattern})\\s+(\\d{1,2})(?:st|nd|rd|th)?\\b`));
+
+  const day = dayFirst ? Number(dayFirst[1]) : monthFirst ? Number(monthFirst[2]) : null;
+  const monthName = dayFirst ? dayFirst[2] : monthFirst ? monthFirst[1] : null;
+  if (!day || !monthName || day < 1 || day > 31) return '';
+
+  const today = new Date();
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const month = monthIndexes[monthName];
+  let candidate = new Date(today.getFullYear(), month, day);
+  if (candidate < startOfToday) candidate = new Date(today.getFullYear() + 1, month, day);
+  return formatDateInput(candidate);
+}
+
+function inferEvent(prompt: string) {
+  const lower = prompt.toLowerCase();
+  if (/\b(pubg|bgmi|free fire|esports|e-sports|gaming)\b/.test(lower)) {
+    const title = lower.includes('pubg') ? 'PUBG Tournament' : lower.includes('bgmi') ? 'BGMI Tournament' : 'Esports Tournament';
+    return { title, category: 'Gaming / Esports', kind: 'gaming', found: title };
+  }
+  if (/\b(ai|artificial intelligence|machine learning|ml|gen ai|genai)\b/.test(lower)) {
+    return { title: 'AI Workshop', category: 'Technology / AI', kind: 'ai', found: 'AI workshop' };
+  }
+  if (/\b(hackathon|coding)\b/.test(lower)) {
+    const title = /\b24\s*(?:hour|hr)\b/.test(lower) ? '24-Hour Hackathon' : 'Hackathon';
+    return { title, category: 'Hackathon / Technology', kind: 'hackathon', found: title };
+  }
+  if (/\b(web dev|web development|frontend|full stack|fullstack)\b/.test(lower)) {
+    return { title: 'Web Development Bootcamp', category: 'Technology', kind: 'workshop', found: 'Web development' };
+  }
+  if (/\b(startup|business|entrepreneur)\b/.test(lower)) {
+    return { title: 'Startup Event', category: 'Entrepreneurship', kind: 'business', found: 'Startup / business' };
+  }
+  if (/\b(cultural|dance|music|singing|concert)\b/.test(lower)) {
+    return { title: 'Cultural Event', category: 'Cultural', kind: 'cultural', found: 'Cultural event' };
+  }
+  if (/\bsports?\b/.test(lower)) {
+    return { title: 'Sports Event', category: 'Sports', kind: 'sports', found: 'Sports event' };
+  }
+  return null;
+}
+
 function inferCity(prompt: string) {
-  const cityMatch = prompt.match(/\bin\s+([a-zA-Z ]+?)(?:\s+with|\s+for|,|\.|$)/i);
-  if (cityMatch?.[1]) return cityMatch[1].trim().replace(/\s+/g, ' ');
-  const known = ['Hyderabad', 'Bengaluru', 'Mumbai', 'Delhi', 'Pune', 'Chennai'];
-  return known.find(city => prompt.toLowerCase().includes(city.toLowerCase())) || 'Hyderabad';
+  const known = ['Hyderabad', 'Bengaluru', 'Bangalore', 'Mumbai', 'Delhi', 'Pune', 'Chennai', 'Kolkata', 'Noida', 'Gurgaon', 'Gurugram', 'Ahmedabad', 'Jaipur'];
+  const knownCity = known.find(city => new RegExp(`\\b${city}\\b`, 'i').test(prompt));
+  if (knownCity) return knownCity === 'Bangalore' ? 'Bengaluru' : knownCity;
+
+  const cityMatch = prompt.match(/\bin\s+([a-zA-Z ]+?)(?=\s+(?:on|at|for|with|from|and|having|including|where|which)\b|,|\.|$)/i);
+  if (!cityMatch?.[1]) return '';
+
+  const city = cityMatch[1].trim().replace(/\s+/g, ' ');
+  if (city.length < 2 || /\b(event|workshop|hackathon|tournament|students?|participants?)\b/i.test(city)) return '';
+  return titleCase(city);
 }
 
-function inferCapacity(prompt: string) {
-  const match = prompt.match(/(\d{2,5})\s*(?:seat|person|people|student|participant|attendee)/i);
-  return match ? Number(match[1]) : 100;
+function inferVenue(prompt: string) {
+  const venueMatch = prompt.match(/\b(?:venue|at)\s+(?:the\s+)?([a-zA-Z0-9 &'-]+?(?:auditorium|hall|arena|ground|stadium|campus|center|centre|room|lab|club|cafe))\b/i);
+  return venueMatch?.[1] ? titleCase(venueMatch[1]) : 'To be announced';
 }
 
-function inferCategory(prompt: string) {
-  const lower = prompt.toLowerCase();
-  if (lower.includes('hackathon')) return 'Hackathon';
-  if (lower.includes('workshop') || lower.includes('ai') || lower.includes('tech')) return 'Technology';
-  if (lower.includes('business') || lower.includes('startup')) return 'Business';
-  if (lower.includes('college') || lower.includes('student')) return 'Education';
-  return 'Technology';
+function inferCapacity(prompt: string, kind: string) {
+  const match = prompt.match(/(\d{1,5})\s*(?:seat|seats|person|people|student|students|participant|participants|attendee|attendees|player|players)/i);
+  if (match) return Number(match[1]);
+  return kind === 'gaming' || kind === 'sports' || kind === 'cultural' ? 50 : 100;
 }
 
-function inferTitle(prompt: string, category: string, city: string) {
-  const lower = prompt.toLowerCase();
-  if (lower.includes('hackathon')) return `${city} Student Hackathon`;
-  if (lower.includes('workshop')) return `${city} AI Workshop`;
-  if (lower.includes('meetup')) return `${city} ${category} Meetup`;
-  return `${city} ${category} Event`;
+function descriptionFor(event: NonNullable<ReturnType<typeof inferEvent>>, maxParticipants: number, city: string) {
+  const locationText = city ? ` in ${city}` : '';
+  if (event.kind === 'gaming') {
+    return `${event.title} is a competitive gaming event where participants compete in structured matches${locationText}. Registrations require organizer approval, and approved players receive event access details.`;
+  }
+  if (event.kind === 'ai') {
+    return `${event.title} is a hands-on learning event for ${maxParticipants} participants${locationText}. Participants apply through a registration form, organizers approve attendees, and approved participants receive QR tickets for verified check-in.`;
+  }
+  if (event.kind === 'hackathon') {
+    return `${event.title} is a build-focused event for ${maxParticipants} participants${locationText}. Teams or individuals submit applications, organizers approve participants, and attendance can be verified for certificates and Proof Passport records.`;
+  }
+  return `${event.title} is an organized event for ${maxParticipants} participants${locationText}. Registration requires organizer approval, approved attendees receive QR tickets, and verified participation can become certificates and proof records.`;
 }
 
 function buildDraft(prompt: string): EventDraft {
-  const city = inferCity(prompt);
-  const maxParticipants = inferCapacity(prompt);
-  const category = inferCategory(prompt);
-  const title = inferTitle(prompt, category, city);
   const lower = prompt.toLowerCase();
+  const event = inferEvent(prompt);
+  const warnings: string[] = [];
+
+  if (!event) {
+    warnings.push('Event type was not clear. What type of event do you want to create?');
+  }
+
+  const city = inferCity(prompt);
+  if (!city) warnings.push('City was not found. You can leave it empty or add a city.');
+
+  const venue = inferVenue(prompt);
+  if (venue === 'To be announced') warnings.push('Venue was not found. Venue is set to To be announced.');
+
+  const date = parsePromptDate(prompt);
+  if (!date) warnings.push('Date was not found. Please choose a date.');
+
+  const fallbackEvent = event ?? { title: 'Untitled Event', category: '', kind: 'unknown', found: '' };
+  const maxParticipants = inferCapacity(prompt, fallbackEvent.kind);
   const needsSponsors = lower.includes('sponsor');
-  const needsVolunteers = lower.includes('volunteer') || maxParticipants >= 100;
+  const needsVolunteers = lower.includes('volunteer') || maxParticipants >= 100 || fallbackEvent.kind === 'gaming';
 
   return {
-    title,
-    slug: slugify(`${title}-${Date.now().toString().slice(-4)}`),
-    description: `${title} is a curated ${category.toLowerCase()} event for ${maxParticipants} participants in ${city}. Registration requires organizer approval, approved attendees receive QR tickets, and verified participation can become certificates and proof records.`,
-    category,
-    date: nextDate(14),
+    title: fallbackEvent.title,
+    slug: slugify(`${fallbackEvent.title}-${Date.now().toString().slice(-4)}`),
+    description: event ? descriptionFor(event, maxParticipants, city) : '',
+    category: fallbackEvent.category,
+    date,
     start_time: '10:00',
     end_time: '16:00',
-    venue: 'Main Auditorium',
+    venue,
     city,
     max_participants: maxParticipants,
     formFields: [
@@ -96,12 +207,19 @@ function buildDraft(prompt: string): EventDraft {
       { label: 'Need certificate?', field_type: 'select', required: false, options: ['Yes', 'No'], sort_order: 5 },
     ],
     volunteerRoles: needsVolunteers ? [
-      { role_name: 'Registration Desk', description: 'Verify approved registrations and guide attendees at check-in.', required_count: 2, skills: ['Communication', 'Check-in Ops'] },
-      { role_name: 'Venue Support', description: 'Support room flow, seating, and participant assistance.', required_count: 2, skills: ['Event Operations', 'Coordination'] },
+      { role_name: fallbackEvent.kind === 'gaming' ? 'Match Desk' : 'Registration Desk', description: fallbackEvent.kind === 'gaming' ? 'Coordinate player check-in, match slots, and event flow.' : 'Verify approved registrations and guide attendees at check-in.', required_count: 2, skills: ['Communication', 'Check-in Ops'] },
+      { role_name: fallbackEvent.kind === 'gaming' ? 'Score Coordinator' : 'Venue Support', description: fallbackEvent.kind === 'gaming' ? 'Track match results and support tournament operations.' : 'Support room flow, seating, and participant assistance.', required_count: 2, skills: ['Event Operations', 'Coordination'] },
     ] : [],
-    sponsorPackages: needsSponsors ? ['Community Partner', 'Workshop Partner', 'Certificate Partner'] : ['Community Partner'],
-    budgetCategories: ['Venue', 'Food & Beverages', 'Certificates', 'Operations', 'Promotion'],
+    sponsorPackages: needsSponsors ? ['Community Partner', fallbackEvent.kind === 'gaming' ? 'Esports Partner' : 'Workshop Partner', 'Certificate Partner'] : ['Community Partner'],
+    budgetCategories: fallbackEvent.kind === 'gaming'
+      ? ['Venue', 'Gaming Setup', 'Prize Pool', 'Operations', 'Promotion']
+      : ['Venue', 'Food & Beverages', 'Certificates', 'Operations', 'Promotion'],
     certificateSetup: 'Certificates are prepared for attended participants after organizer verification.',
+    analysis: {
+      foundEventType: fallbackEvent.found,
+      foundDate: Boolean(date),
+      warnings,
+    },
   };
 }
 
@@ -134,6 +252,10 @@ export default function AICreateEvent() {
     setError('');
     if (!prompt.trim()) {
       setError('Describe the event you want to create.');
+      return;
+    }
+    if (!inferEvent(prompt)) {
+      setError('What type of event do you want to create? Try examples like PUBG event, AI workshop, hackathon, cultural event, or sports event.');
       return;
     }
     setLoading(true);
@@ -223,7 +345,8 @@ export default function AICreateEvent() {
 
           {draft && (
             <div className="mt-6 rounded-[1.5rem] border border-[#DCE8BE] bg-[#EEF5D9] p-4">
-              <p className="text-xs font-black text-[#52670F] mb-3">EventOS generated</p>
+              <p className="text-sm font-black text-[#52670F]">Event draft generated from your prompt.</p>
+              <p className="mt-1 mb-3 text-xs text-[#5E6256]">Please review and edit before creating.</p>
               <div className="grid sm:grid-cols-2 gap-2">
                 {outputItems.map(item => (
                   <div key={item.label} className="flex items-center gap-2 rounded-xl bg-white border border-[#E7E1D2] px-3 py-2">
@@ -245,6 +368,34 @@ export default function AICreateEvent() {
             </div>
           ) : (
             <div className="space-y-4">
+              <div className="rounded-[1.25rem] border border-[#DCE8BE] bg-[#F3F8E3] p-4">
+                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-black text-[#52670F]">Event draft generated from your prompt.</p>
+                    <p className="mt-1 text-xs text-[#5E6256]">Please review and edit every field before creating the event.</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="rounded-full bg-white border border-[#DCE8BE] px-3 py-1 text-xs font-bold text-[#52670F]">
+                      Found event type: {draft.analysis.foundEventType}
+                    </span>
+                    <span className={`rounded-full border px-3 py-1 text-xs font-bold ${
+                      draft.analysis.foundDate ? 'bg-white border-[#DCE8BE] text-[#52670F]' : 'bg-amber-50 border-amber-200 text-amber-700'
+                    }`}>
+                      {draft.analysis.foundDate ? 'Found date' : 'Missing date'}
+                    </span>
+                  </div>
+                </div>
+                {draft.analysis.warnings.length > 0 && (
+                  <div className="mt-3 grid sm:grid-cols-2 gap-2">
+                    {draft.analysis.warnings.map(warning => (
+                      <p key={warning} className="rounded-xl bg-white/75 border border-[#E7E1D2] px-3 py-2 text-xs text-[#6B705D]">
+                        {warning}
+                      </p>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div className="grid sm:grid-cols-2 gap-4">
                 <label className="block">
                   <span className="text-xs text-[#5E6256] mb-1.5 block">Event Title</span>
