@@ -373,17 +373,6 @@ function saveDraftToDemoStore(draft: EventDraft, organizerId: string, forcedEven
   return event.id;
 }
 
-function canFallbackToDemoSave(err: unknown) {
-  const message = err instanceof Error ? err.message.toLowerCase() : '';
-  return (
-    message.includes('auth session missing') ||
-    message.includes('requires a real supabase auth organizer session') ||
-    message.includes('jwt') ||
-    message.includes('row-level security') ||
-    message.includes('violates row-level security')
-  );
-}
-
 export default function AICreateEvent() {
   const navigate = useNavigate();
   const user = store.getCurrentUser();
@@ -451,17 +440,14 @@ export default function AICreateEvent() {
 
     setSaving(true);
     try {
-      const eventId = await saveDraftToSupabase(draft);
-      saveDraftToDemoStore(draft, user.id, eventId);
+      const eventId = saveDraftToDemoStore(draft, user.id);
       localStorage.removeItem(AI_PROMPT_KEY);
       navigate(`/dashboard/organizer/events/${eventId}`);
+
+      void saveDraftToSupabase(draft).catch(() => {
+        // Demo access is local-first. Supabase mirroring needs real auth/RLS support.
+      });
     } catch (err) {
-      if (canFallbackToDemoSave(err)) {
-        const eventId = saveDraftToDemoStore(draft, user.id);
-        localStorage.removeItem(AI_PROMPT_KEY);
-        navigate(`/dashboard/organizer/events/${eventId}`);
-        return;
-      }
       setError(err instanceof Error ? err.message : 'Event creation failed.');
     } finally {
       setSaving(false);
