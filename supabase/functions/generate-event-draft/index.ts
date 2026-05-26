@@ -111,17 +111,68 @@ function normalizeRegistrationFields(value: unknown): RegistrationField[] {
   ];
 }
 
-function normalizeDraft(value: Record<string, unknown>): GenerateEventDraftResponse {
+function isWeakDescription(description: string, prompt: string) {
+  const normalizedDescription = description.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const normalizedPrompt = prompt.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  return (
+    description.length < 110 ||
+    normalizedDescription === normalizedPrompt ||
+    /^.+\s+event\s+(on|at)\s+.+$/i.test(description) ||
+    !/[.!?].+[.!?]/s.test(description)
+  );
+}
+
+function generatedDescriptionFor(draft: {
+  title: string;
+  category: string;
+  event_date: string;
+  city: string;
+  venue: string;
+  max_participants: number;
+}) {
+  const title = draft.title || "This event";
+  const category = draft.category.toLowerCase();
+  const participantText = draft.max_participants > 0 ? ` for up to ${draft.max_participants} participants` : "";
+  const cityText = draft.city ? ` in ${draft.city}` : "";
+  const venueText = draft.venue && draft.venue !== "To be announced" ? ` at ${draft.venue}` : "";
+
+  if (category.includes("gaming") || category.includes("esports") || /\b(pubg|bgmi|free fire|esports)\b/i.test(title)) {
+    return `${title} is a competitive gaming event${participantText}${cityText}${venueText}, built around structured matches, fair play, and an organized player experience. Participants submit registrations for organizer approval, and approved players receive event access details for check-in. Winners, attendance, and participation can later be verified through EventOS certificates and Proof Passport records.`;
+  }
+
+  if (category.includes("ai") || category.includes("technology") || /\b(ai|workshop|machine learning|tech)\b/i.test(title)) {
+    return `${title} is a hands-on learning event${participantText}${cityText}${venueText}, designed for participants who want a focused and practical experience. Registrations require organizer approval, approved attendees receive QR-based access, and verified attendance can be used for certificates and Proof Passport records.`;
+  }
+
+  if (category.includes("hackathon") || /\bhackathon\b/i.test(title)) {
+    return `${title} is a build-focused event${participantText}${cityText}${venueText}, where participants work on ideas, prototypes, and problem-solving under a structured event flow. Applications are reviewed by the organizer, approved participants receive check-in access, and verified participation can become certificates and Proof Passport records.`;
+  }
+
+  return `${title} is an organized event${participantText}${cityText}${venueText}, with registration approval, check-in management, and participant verification handled through EventOS. Approved attendees receive event access details, and verified participation can later support certificates and Proof Passport records.`;
+}
+
+function normalizeDraft(value: Record<string, unknown>, prompt: string): GenerateEventDraftResponse {
+  const title = normalizeString(value.title);
+  const category = normalizeString(value.category);
+  const event_date = normalizeDate(value.event_date);
+  const venue = normalizeString(value.venue) || "To be announced";
+  const city = normalizeString(value.city);
+  const max_participants = Math.max(0, Number(value.max_participants) || 0);
+  const rawDescription = normalizeString(value.description);
+  const description = isWeakDescription(rawDescription, prompt)
+    ? generatedDescriptionFor({ title, category, event_date, city, venue, max_participants })
+    : rawDescription;
+
   return {
-    title: normalizeString(value.title),
-    category: normalizeString(value.category),
-    description: normalizeString(value.description),
-    event_date: normalizeDate(value.event_date),
+    title,
+    category,
+    description,
+    event_date,
     start_time: normalizeTime(value.start_time, "10:00"),
     end_time: normalizeTime(value.end_time, "16:00"),
-    venue: normalizeString(value.venue) || "To be announced",
-    city: normalizeString(value.city),
-    max_participants: Math.max(0, Number(value.max_participants) || 0),
+    venue,
+    city,
+    max_participants,
     registration_fields: normalizeRegistrationFields(value.registration_fields),
     volunteer_roles: (Array.isArray(value.volunteer_roles) ? value.volunteer_roles : [])
       .map((role) => {
@@ -260,7 +311,7 @@ Deno.serve(async (req) => {
         {
           role: "system",
           content:
-            "You are EventOS AI, an event setup assistant. Convert the organizer's natural-language event idea into a structured event draft. Return only valid JSON. Do not include markdown. Do not invent specific city/venue unless provided. Use reasonable defaults only when missing. Preserve the user's event intent. Interpret natural dates using currentDate and timezone. If venue is missing, use To be announced. If city is missing, use an empty string. If time is missing, use 10:00 and 16:00. If seats are missing, use 50 for gaming/esports, 100 for workshops/general events, and 200 for hackathons.",
+            "You are EventOS AI, an event setup assistant. Convert the organizer's natural-language event idea into a structured event draft. Return only valid JSON. Do not include markdown. Do not invent specific city/venue unless provided. Use reasonable defaults only when missing. Preserve the user's event intent. The description must be original, polished, and useful: write 2-3 complete sentences explaining the event experience, registration approval, check-in/proof/certificates where relevant. Never echo the user's short prompt as the description. Interpret natural dates using currentDate and timezone. If venue is missing, use To be announced. If city is missing, use an empty string. If time is missing, use 10:00 and 16:00. If seats are missing, use 50 for gaming/esports, 100 for workshops/general events, and 200 for hackathons.",
         },
         { role: "user", content: buildUserPrompt({ prompt, currentDate, timezone }) },
       ],
@@ -286,7 +337,7 @@ Deno.serve(async (req) => {
 
   try {
     const parsed = JSON.parse(content) as Record<string, unknown>;
-    return jsonResponse(normalizeDraft(parsed));
+    return jsonResponse(normalizeDraft(parsed, prompt));
   } catch {
     return jsonResponse(
       { error: "Groq returned non-JSON content.", raw: content },
