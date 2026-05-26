@@ -84,7 +84,7 @@ If `GROQ_API_KEY` is missing, the function returns a clear JSON error instead of
 Deploy:
 
 ```bash
-supabase functions deploy generate-event-draft
+supabase functions deploy generate-event-draft --no-verify-jwt
 ```
 
 Set the Groq key as a Supabase secret:

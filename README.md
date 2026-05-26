@@ -71,7 +71,7 @@ supabase secrets set GROQ_API_KEY=your_groq_key
 Deploy the event draft function:
 
 ```bash
-supabase functions deploy generate-event-draft
+supabase functions deploy generate-event-draft --no-verify-jwt
 ```
 
 Optional sponsor pitch function:
