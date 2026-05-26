@@ -80,12 +80,8 @@ export default function Home() {
 
   const startCreating = () => {
     localStorage.setItem(AI_PROMPT_KEY, prompt.trim() || defaultPrompt);
-    if (user) {
-      if (user.role !== 'organizer') continueAs('organizer');
-      navigate('/dashboard/organizer/create-with-ai');
-      return;
-    }
-    navigate('/login');
+    if (!user || user.role !== 'organizer') continueAs('organizer');
+    navigate('/dashboard/organizer/create-with-ai');
   };
 
   return (
