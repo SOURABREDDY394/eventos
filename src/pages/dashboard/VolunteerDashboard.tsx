@@ -12,12 +12,12 @@ export default function VolunteerDashboard() {
   const opportunities = useSyncedPublishedEvents().slice(0, 3);
 
   const statCards = [
-    { icon: HeartHandshake, label: 'Applications Submitted', value: stats.applications, color: 'text-blue-400' },
-    { icon: Award, label: 'Approved Applications', value: stats.approvedApplications, color: 'text-emerald-400' },
-    { icon: ClipboardList, label: 'Assigned Tasks', value: stats.assignedTasks, color: 'text-amber-400' },
-    { icon: Clock, label: 'Completed Hours', value: stats.completedHours, color: 'text-emerald-400' },
-    { icon: Wrench, label: 'Skills Earned', value: stats.skillsEarned, color: 'text-purple-400' },
-    { icon: Shield, label: 'Proof Records', value: stats.proofRecords, color: 'text-[#E49B3A]' },
+    { icon: HeartHandshake, label: 'Applications Submitted', value: stats.applications, tone: 'bg-[#EDF7EC] text-[#53710C]' },
+    { icon: Award, label: 'Approved Applications', value: stats.approvedApplications, tone: 'bg-[#F1FFF5] text-[#147142]' },
+    { icon: ClipboardList, label: 'Assigned Tasks', value: stats.assignedTasks, tone: 'bg-[#F7F7D9] text-[#5D6710]' },
+    { icon: Clock, label: 'Completed Hours', value: stats.completedHours, tone: 'bg-[#EAF1FF] text-[#315B92]' },
+    { icon: Wrench, label: 'Skills Earned', value: stats.skillsEarned, tone: 'bg-[#F4EEFF] text-[#7053A6]' },
+    { icon: Shield, label: 'Proof Records', value: stats.proofRecords, tone: 'bg-[#FFF4DE] text-[#A06D11]' },
   ];
 
   const actions = [
@@ -48,44 +48,44 @@ export default function VolunteerDashboard() {
     <DashboardLayout title="Volunteer Dashboard">
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
         {statCards.map((stat) => (
-          <div key={stat.label} className="glass-card rounded-lg p-4">
-            <stat.icon className={`w-5 h-5 ${stat.color} mb-2`} />
-            <p className="text-lg font-bold text-white">{stat.value}</p>
-            <p className="text-[10px] text-white/30">{stat.label}</p>
+          <div key={stat.label} className={`rounded-2xl border border-black/10 p-4 shadow-sm ${stat.tone}`}>
+            <stat.icon className="w-5 h-5 mb-3" />
+            <p className="text-2xl font-black">{stat.value}</p>
+            <p className="text-[10px] font-black tracking-wide uppercase">{stat.label}</p>
           </div>
         ))}
       </div>
 
       <div className="grid md:grid-cols-3 gap-4 mb-8">
         {actions.map((action) => (
-          <button key={action.title} onClick={() => navigate(action.path)} className="glass-card rounded-xl p-5 text-left hover:border-[#E49B3A]/25 transition-all">
-            <action.icon className="w-7 h-7 text-[#E49B3A] mb-3" />
-            <h2 className="text-sm font-semibold text-white">{action.title}</h2>
-            <p className="text-xs text-white/35 mt-2 min-h-10">{action.text}</p>
-            <span className="inline-flex mt-4 text-xs text-[#E49B3A]">{action.button}</span>
+          <button key={action.title} onClick={() => navigate(action.path)} className="rounded-[1.5rem] border border-[#E1D8BE] bg-[#FFFCF3] p-5 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(82,103,15,0.12)]">
+            <action.icon className="w-7 h-7 text-[#52670F] mb-3" />
+            <h2 className="text-base font-black text-[#14150F]">{action.title}</h2>
+            <p className="text-sm text-[#5E6256] mt-2 min-h-10">{action.text}</p>
+            <span className="inline-flex mt-4 text-xs font-black text-[#52670F]">{action.button}</span>
           </button>
         ))}
       </div>
 
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base font-semibold text-white">Recommended Opportunities</h2>
-        <button onClick={() => navigate('/dashboard/volunteer/applications')} className="text-xs text-[#E49B3A] hover:underline">View all</button>
+        <h2 className="text-xl font-black text-[#14150F]">Recommended Opportunities</h2>
+        <button onClick={() => navigate('/dashboard/volunteer/applications')} className="text-xs font-black text-[#52670F] hover:underline">View all</button>
       </div>
 
       {opportunities.length === 0 ? (
-        <div className="glass-card rounded-xl p-8 text-center">
-          <Sparkles className="w-12 h-12 text-white/10 mx-auto mb-3" />
-          <p className="text-sm text-white/30">No volunteer opportunities available yet.</p>
+        <div className="rounded-[2rem] border border-dashed border-[#D9D0B8] bg-[#FFFCF3] p-8 text-center">
+          <Sparkles className="w-12 h-12 text-[#52670F]/30 mx-auto mb-3" />
+          <p className="text-sm font-semibold text-[#5E6256]">No volunteer opportunities available yet.</p>
         </div>
       ) : (
         <div className="grid gap-4">
           {opportunities.map((event) => (
-            <div key={event.id} className="glass-card rounded-xl p-4 flex flex-col sm:flex-row gap-4">
+            <div key={event.id} className="rounded-[1.5rem] border border-[#E1D8BE] bg-[#FFFCF3] p-4 flex flex-col sm:flex-row gap-4 shadow-sm">
               <EventPoster event={event} className="w-full sm:w-36 h-24 rounded-lg flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#E49B3A]/10 text-[#E49B3A]">{event.category}</span>
-                <h3 className="text-base font-semibold text-white mt-1">{event.title}</h3>
-                <div className="flex flex-wrap items-center gap-3 text-[10px] text-white/30 mt-2">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FFF4DE] text-[#A06D11]">{event.category}</span>
+                <h3 className="text-base font-black text-[#14150F] mt-1">{event.title}</h3>
+                <div className="flex flex-wrap items-center gap-3 text-[10px] text-[#5E6256] mt-2">
                   <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {event.date}</span>
                   <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {event.venue || event.city}</span>
                 </div>

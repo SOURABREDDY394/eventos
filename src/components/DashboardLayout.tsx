@@ -55,9 +55,9 @@ export function DashboardLayout({ children, title }: { children: React.ReactNode
   const initial = user.full_name?.[0] || user.username?.[0] || '?';
 
   return (
-    <div className="eventos-light-app min-h-screen bg-[#F9F8F1] text-[#14150F]">
+    <div className="eventos-light-app min-h-screen bg-[radial-gradient(circle_at_80%_0%,rgba(220,233,183,0.85),transparent_30rem),linear-gradient(180deg,#FBFAF3_0%,#F6F3E8_48%,#F9F8F1_100%)] text-[#14150F]">
       <main className="max-w-[92rem] mx-auto px-4 sm:px-6 py-5 sm:py-7">
-        <div className="mb-6 rounded-full bg-white/92 backdrop-blur-xl border border-[#E4E0D4] shadow-[0_10px_30px_rgba(35,40,20,0.08)] px-4 py-3 flex items-center justify-between gap-4">
+        <div className="mb-6 rounded-[1.75rem] sm:rounded-full bg-white/92 backdrop-blur-xl border border-[#E4E0D4] shadow-[0_10px_30px_rgba(35,40,20,0.08)] px-4 py-3 flex items-center justify-between gap-4">
           <Link to="/" className="flex items-center gap-2">
             <span className="w-10 h-10 rounded-full bg-[#EEF5D9] border border-[#DCE8BE] flex items-center justify-center">
               <Shield className="w-5 h-5 text-[#5C7415]" />
@@ -89,12 +89,13 @@ export function DashboardLayout({ children, title }: { children: React.ReactNode
           </div>
         </div>
 
-        <section className="relative overflow-hidden rounded-[2rem] bg-white border border-[#E7E1D2] px-5 py-5 sm:px-7 sm:py-6 shadow-sm mb-6">
+        <section className="relative overflow-hidden rounded-[2rem] bg-[#FFFCF3] border border-[#E7E1D2] px-5 py-6 sm:px-8 sm:py-8 shadow-[0_20px_60px_rgba(82,103,15,0.10)] mb-6">
           <div className="absolute right-0 top-0 h-36 w-56 rounded-full bg-[#DCE7BD]/70 blur-3xl" />
+          <div className="absolute bottom-0 left-8 h-px w-2/3 bg-gradient-to-r from-transparent via-[#C9D4A8] to-transparent" />
           <div className="relative flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
             <div>
               <p className="text-xs font-black tracking-[0.22em] text-[#6A7D1A] uppercase">{workspaceRole} workspace</p>
-              <h1 className="text-3xl sm:text-5xl font-black text-[#14150F] mt-1 leading-none">{title}</h1>
+              <h1 className="text-4xl sm:text-6xl font-black text-[#14150F] mt-2 leading-none tracking-[-0.025em]">{title}</h1>
             </div>
             <p className="max-w-md text-sm text-[#5E6256]">
               One login opens every workspace. Use Dashboard Options on the main page to move between Organizer, Participant, Volunteer, and Sponsor.

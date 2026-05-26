@@ -3,7 +3,7 @@ import { Shield, Mail, Github, Twitter } from 'lucide-react';
 
 export function Footer() {
   return (
-    <footer className="bg-[#080402] border-t border-[#F7C56B]/10 pt-14 pb-8">
+    <footer className="bg-[#10120B] border-t border-[#DCE9B7]/10 pt-14 pb-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
           <div>
