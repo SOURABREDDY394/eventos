@@ -28,59 +28,61 @@ export function EventLocationMap({ event, variant = 'light' }: { event: Event; v
   const hasLocation = Boolean(venue || city);
   const mapsUrl = getGoogleMapsUrl(event);
   const embedUrl = getGoogleMapsEmbedUrl(event);
-  const isDark = variant === 'dark';
-  const shellClass = isDark
-    ? 'relative overflow-hidden rounded-2xl border border-[#F5C66C]/15 bg-[#0B0D06] shadow-[0_28px_90px_rgba(0,0,0,0.32)]'
-    : 'relative overflow-hidden rounded-[1.75rem] border border-[#D9D0B8] bg-[#FEFCF4] shadow-[0_28px_80px_rgba(82,103,15,0.12)]';
-  const panelClass = isDark
-    ? 'border-white/10 bg-white/[0.055] text-white'
-    : 'border-[#E2D9BF] bg-white text-[#14150F]';
-  const mutedText = isDark ? 'text-white/45' : 'text-[#5E6256]';
-  const titleText = isDark ? 'text-white' : 'text-[#14150F]';
-  const accentText = isDark ? 'text-[#F5C66C]' : 'text-[#52670F]';
+  const isCompact = variant === 'dark';
 
   return (
-    <section className={shellClass}>
+    <section className="relative overflow-hidden rounded-[2rem] border border-[#D9D2B9] bg-[#F7F3E8] text-[#14150F] shadow-[0_30px_90px_rgba(82,103,15,0.14)]">
       <div className="pointer-events-none absolute inset-0">
-        <div className={isDark ? 'absolute -right-20 -top-20 h-60 w-60 rounded-full bg-[#F5C66C]/10 blur-3xl' : 'absolute -right-20 -top-20 h-64 w-64 rounded-full bg-[#DCE9B7] blur-3xl'} />
-        <div className={isDark ? 'absolute -left-24 bottom-0 h-56 w-56 rounded-full bg-[#A76A19]/10 blur-3xl' : 'absolute -left-24 bottom-0 h-56 w-56 rounded-full bg-[#F5C66C]/18 blur-3xl'} />
+        <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-[#DCE9B7] blur-3xl" />
+        <div className="absolute -left-24 bottom-0 h-64 w-64 rounded-full bg-[#F5C66C]/24 blur-3xl" />
+        <div className="absolute inset-x-8 top-1/2 hidden border-t border-dashed border-[#52670F]/18 lg:block" />
       </div>
 
-      <div className="relative grid lg:grid-cols-[0.78fr_1.22fr]">
-        <aside className={isDark ? 'p-5 sm:p-6 lg:p-7 border-b lg:border-b-0 lg:border-r border-white/10' : 'p-5 sm:p-6 lg:p-7 border-b lg:border-b-0 lg:border-r border-[#E6DEC8]'}>
-          <div className="flex items-center gap-2">
-            <span className={isDark ? 'inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F5C66C]/12 text-[#F5C66C]' : 'inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#EEF5DC] text-[#52670F]'}>
+      <div className={`relative grid ${isCompact ? 'lg:grid-cols-[0.84fr_1.16fr]' : 'lg:grid-cols-[0.9fr_1.1fr]'}`}>
+        <aside className="relative p-5 sm:p-7 lg:p-8">
+          <div className="absolute right-0 top-8 hidden h-[calc(100%-4rem)] w-px bg-gradient-to-b from-transparent via-[#CFC4A7] to-transparent lg:block" />
+
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#D7E3B3] bg-[#FCFAF1]/80 px-3 py-2 shadow-sm">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#EEF5DC] text-[#52670F]">
               <LocateFixed className="h-5 w-5" />
             </span>
             <div>
-              <p className={`text-[10px] font-black uppercase tracking-[0.28em] ${accentText}`}>Venue Map</p>
-              <h2 className={`mt-1 text-2xl font-black ${titleText}`}>Event Location</h2>
+              <p className="text-[10px] font-black uppercase tracking-[0.26em] text-[#52670F]">Venue Intel</p>
+              <p className="text-xs font-semibold text-[#6A6D5D]">Live location layer</p>
             </div>
           </div>
 
-          <p className={`mt-4 text-sm leading-relaxed ${mutedText}`}>
+          <h2 className="mt-7 max-w-md text-4xl font-black leading-[0.95] tracking-[-0.02em] sm:text-5xl">
+            Know the room before you arrive.
+          </h2>
+
+          <p className="mt-5 max-w-md text-sm leading-7 text-[#5E6256]">
             {hasLocation
-              ? 'Use the map preview to understand the venue context before applying, volunteering, or sponsoring.'
+              ? 'EventOS turns the venue into a clear arrival checkpoint, so participants, volunteers, sponsors, and organizers see the same location truth.'
               : 'The organizer has not added a venue yet. Add a city or venue to unlock the live map preview.'}
           </p>
 
-          <div className="mt-6 space-y-3">
-            <div className={`rounded-2xl border p-4 ${panelClass}`}>
+          <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+            <div className="group rounded-[1.35rem] border border-[#E1D8BE] bg-[#FFFCF3]/82 p-4 shadow-[0_16px_34px_rgba(82,103,15,0.08)] transition-transform hover:-translate-y-1">
               <div className="flex items-start gap-3">
-                <Building2 className={`mt-0.5 h-4 w-4 ${accentText}`} />
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F7E5BE] text-[#A76A19]">
+                  <Building2 className="h-4 w-4" />
+                </span>
                 <div>
-                  <p className={`text-[10px] font-bold uppercase tracking-[0.18em] ${mutedText}`}>Venue</p>
-                  <p className={`mt-1 text-sm font-bold ${titleText}`}>{venue || 'To be announced'}</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#7D805E]">Venue</p>
+                  <p className="mt-1 text-sm font-black text-[#14150F]">{venue || 'To be announced'}</p>
                 </div>
               </div>
             </div>
 
-            <div className={`rounded-2xl border p-4 ${panelClass}`}>
+            <div className="group rounded-[1.35rem] border border-[#E1D8BE] bg-[#FFFCF3]/82 p-4 shadow-[0_16px_34px_rgba(82,103,15,0.08)] transition-transform hover:-translate-y-1">
               <div className="flex items-start gap-3">
-                <MapPin className={`mt-0.5 h-4 w-4 ${accentText}`} />
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#EEF5DC] text-[#52670F]">
+                  <MapPin className="h-4 w-4" />
+                </span>
                 <div>
-                  <p className={`text-[10px] font-bold uppercase tracking-[0.18em] ${mutedText}`}>City</p>
-                  <p className={`mt-1 text-sm font-bold ${titleText}`}>{city || 'Not specified'}</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#7D805E]">City</p>
+                  <p className="mt-1 text-sm font-black text-[#14150F]">{city || 'Not specified'}</p>
                 </div>
               </div>
             </div>
@@ -90,7 +92,7 @@ export function EventLocationMap({ event, variant = 'light' }: { event: Event; v
             href={mapsUrl}
             target="_blank"
             rel="noreferrer"
-            className={isDark ? 'mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#F5C66C] px-5 py-3 text-sm font-black text-[#14150F] transition-transform hover:-translate-y-0.5 hover:brightness-105' : 'mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#52670F] px-5 py-3 text-sm font-black text-white transition-transform hover:-translate-y-0.5 hover:bg-[#43540C]'}
+            className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#52670F] px-5 py-3.5 text-sm font-black text-white shadow-[0_16px_34px_rgba(82,103,15,0.22)] transition-transform hover:-translate-y-1 hover:bg-[#43540C] sm:w-auto"
           >
             <Navigation className="h-4 w-4" />
             Open in Google Maps
@@ -98,34 +100,49 @@ export function EventLocationMap({ event, variant = 'light' }: { event: Event; v
           </a>
         </aside>
 
-        <div className="relative min-h-[22rem] p-3 sm:p-4">
+        <div className="relative min-h-[23rem] p-4 sm:p-6 lg:p-8">
           {hasLocation ? (
-            <div className={isDark ? 'relative h-full min-h-[22rem] overflow-hidden rounded-[1.35rem] border border-white/10 bg-black shadow-2xl' : 'relative h-full min-h-[22rem] overflow-hidden rounded-[1.35rem] border border-[#E3D8BD] bg-[#EEE7D6] shadow-[0_18px_48px_rgba(82,103,15,0.13)]'}>
-              <iframe
-                title={`${event.title} location map`}
-                src={embedUrl}
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                className="h-full min-h-[22rem] w-full border-0 grayscale-[18%] sepia-[10%] contrast-[1.02]"
-              />
-              <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/30 to-transparent" />
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/45 to-transparent" />
-              <div className="absolute left-4 top-4 rounded-full border border-white/25 bg-black/55 px-3 py-2 text-xs font-bold text-white shadow-xl backdrop-blur-md">
-                {event.title}
-              </div>
-              <div className="absolute bottom-4 left-4 right-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-white/18 bg-black/58 p-4 text-white shadow-xl backdrop-blur-md">
-                  <div className="flex items-center gap-2 text-[#F5C66C]">
-                    <Compass className="h-4 w-4" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.18em]">Arrive Prepared</span>
-                  </div>
-                  <p className="mt-2 text-sm font-semibold">{[venue, city].filter(Boolean).join(', ')}</p>
+            <div className="relative min-h-[23rem]">
+              <div className="absolute -left-3 top-8 hidden h-24 w-24 rounded-full border border-dashed border-[#AAB878] lg:block" />
+              <div className="absolute -right-2 bottom-10 hidden h-16 w-16 rounded-full bg-[#F5C66C]/50 blur-xl lg:block" />
+
+              <div className="relative h-full min-h-[23rem] overflow-hidden rounded-[1.75rem] border border-[#D8CCAC] bg-[#EEE7D6] shadow-[0_24px_70px_rgba(82,103,15,0.16)]">
+                <iframe
+                  title={`${event.title} location map`}
+                  src={embedUrl}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  className="h-full min-h-[23rem] w-full border-0 saturate-[0.86] sepia-[0.08] contrast-[1.02]"
+                />
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#F7F3E8]/70 to-transparent" />
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#1A1D11]/45 to-transparent" />
+                <div className="absolute left-4 top-4 max-w-[78%] rounded-full border border-[#D8CCAC] bg-[#FFFCF3]/90 px-4 py-2 text-xs font-black text-[#14150F] shadow-xl backdrop-blur-md">
+                  {event.title}
                 </div>
                 <a
                   href={mapsUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="rounded-2xl border border-white/18 bg-white/90 p-4 text-[#14150F] shadow-xl backdrop-blur-md transition-transform hover:-translate-y-0.5"
+                  className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-[#52670F] text-white shadow-xl transition-transform hover:scale-105"
+                  aria-label="Open route planner"
+                >
+                  <Route className="h-4 w-4" />
+                </a>
+              </div>
+
+              <div className="pointer-events-none absolute -bottom-4 left-4 right-4 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-[1.35rem] border border-[#E4D7B6] bg-[#FFFCF3]/92 p-4 text-[#14150F] shadow-[0_18px_44px_rgba(20,21,15,0.16)] backdrop-blur-md">
+                  <div className="flex items-center gap-2 text-[#A76A19]">
+                    <Compass className="h-4 w-4" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.18em]">Meet Point</span>
+                  </div>
+                  <p className="mt-2 text-sm font-black">{[venue, city].filter(Boolean).join(', ')}</p>
+                </div>
+                <a
+                  href={mapsUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="pointer-events-auto rounded-[1.35rem] border border-[#D7E3B3] bg-[#EEF5DC]/94 p-4 text-[#14150F] shadow-[0_18px_44px_rgba(82,103,15,0.16)] backdrop-blur-md transition-transform hover:-translate-y-1"
                 >
                   <div className="flex items-center gap-2 text-[#52670F]">
                     <Route className="h-4 w-4" />
@@ -136,11 +153,14 @@ export function EventLocationMap({ event, variant = 'light' }: { event: Event; v
               </div>
             </div>
           ) : (
-            <div className={isDark ? 'flex h-full min-h-[22rem] items-center justify-center rounded-[1.35rem] border border-dashed border-white/12 bg-white/[0.035] p-8 text-center' : 'flex h-full min-h-[22rem] items-center justify-center rounded-[1.35rem] border border-dashed border-[#D9D0B8] bg-[#F5F1E6] p-8 text-center'}>
-              <div>
-                <MapPin className={isDark ? 'mx-auto mb-4 h-12 w-12 text-white/15' : 'mx-auto mb-4 h-12 w-12 text-[#52670F]/25'} />
-                <p className={`text-lg font-black ${titleText}`}>Map unlocks after location is added</p>
-                <p className={`mx-auto mt-2 max-w-sm text-sm ${mutedText}`}>Add venue and city while creating or editing the event so participants can open directions instantly.</p>
+            <div className="flex h-full min-h-[23rem] items-center justify-center rounded-[1.75rem] border border-dashed border-[#D9D0B8] bg-[#FFFCF3]/70 p-8 text-center">
+              <div className="relative">
+                <div className="absolute left-1/2 top-9 h-28 w-px -translate-x-1/2 border-l border-dashed border-[#AAB878]" />
+                <div className="relative mx-auto mb-16 flex h-16 w-16 items-center justify-center rounded-full bg-[#EEF5DC] text-[#52670F] shadow-lg">
+                  <MapPin className="h-7 w-7" />
+                </div>
+                <p className="text-2xl font-black text-[#14150F]">Map unlocks after location is added</p>
+                <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-[#5E6256]">Add venue and city while creating or editing the event so participants can open directions instantly.</p>
               </div>
             </div>
           )}
