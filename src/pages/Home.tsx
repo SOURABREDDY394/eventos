@@ -32,7 +32,7 @@ const moduleStrip = [
 
 export default function Home() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, continueAs } = useAuth();
   const [prompt, setPrompt] = useState(defaultPrompt);
   useScrollReveal();
   const events = store.getEvents();
@@ -80,7 +80,12 @@ export default function Home() {
 
   const startCreating = () => {
     localStorage.setItem(AI_PROMPT_KEY, prompt.trim() || defaultPrompt);
-    navigate(user?.role === 'organizer' ? '/dashboard/organizer/create-with-ai' : '/login');
+    if (user) {
+      if (user.role !== 'organizer') continueAs('organizer');
+      navigate('/dashboard/organizer/create-with-ai');
+      return;
+    }
+    navigate('/login');
   };
 
   return (

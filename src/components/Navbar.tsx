@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import { Building2, HeartHandshake, Menu, Shield, UserCog, UserPlus, X } from 'lucide-react';
-import { demoUsers, getDashboardRoute, useAuth } from '@/hooks/useAuth';
+import { getDashboardRoute, useAuth } from '@/hooks/useAuth';
 import type { UserRole } from '@/types';
 
 const AI_PROMPT_KEY = 'eventos_ai_prompt';
@@ -37,7 +37,6 @@ export function Navbar() {
     <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
       {roles.map((role) => {
         const Icon = role.icon;
-        const demoUser = demoUsers[role.value];
         const active = user?.role === role.value;
 
         return (
@@ -56,7 +55,7 @@ export function Navbar() {
               <h3 className="text-base font-black text-[#14150F]">{role.label}</h3>
               {active && <span className="rounded-full bg-[#EEF5D9] px-2 py-0.5 text-[10px] font-black text-[#52670F]">Current</span>}
             </div>
-            <p className="text-xs text-[#6B705D] mt-1">@{demoUser.username}</p>
+            <p className="text-xs text-[#6B705D] mt-1">Open workspace</p>
             <p className="text-sm text-[#5E6256] leading-5 mt-3">{role.desc}</p>
           </Link>
         );
@@ -85,13 +84,20 @@ export function Navbar() {
               <Link to="/events" className="rounded-full border border-[#DDE3CA] px-4 py-2 text-sm font-bold text-[#52670F] hover:bg-[#F2F6E7] transition-colors">Events</Link>
               {loading ? (
                 <span className="text-xs text-[#667055]">Loading...</span>
-              ) : (
+              ) : user ? (
                 <button
                   onClick={() => setDashboardOpen(open => !open)}
                   className="rounded-full bg-[#52670F] px-5 py-2 text-sm font-black text-white"
                 >
                   Dashboard
                 </button>
+              ) : (
+                <Link
+                  to="/login"
+                  className="rounded-full bg-[#52670F] px-5 py-2 text-sm font-black text-white"
+                >
+                  Login
+                </Link>
               )}
             </div>
 
@@ -103,13 +109,21 @@ export function Navbar() {
           {mobileOpen && (
             <div className="md:hidden px-5 pb-5 space-y-3">
               <Link to="/events" className="block rounded-full border border-[#DDE3CA] px-4 py-2 text-center text-sm font-bold text-[#52670F]">Events</Link>
-              <button
-                onClick={() => setDashboardOpen(open => !open)}
-                className="block w-full rounded-full bg-[#52670F] px-5 py-2 text-center text-sm font-black text-white"
-              >
-                Dashboard Options
-              </button>
-              {dashboardOpen && <div className="pt-2">{rolePanel}</div>}
+              {user ? (
+                <>
+                  <button
+                    onClick={() => setDashboardOpen(open => !open)}
+                    className="block w-full rounded-full bg-[#52670F] px-5 py-2 text-center text-sm font-black text-white"
+                  >
+                    Dashboard Options
+                  </button>
+                  {dashboardOpen && <div className="pt-2">{rolePanel}</div>}
+                </>
+              ) : (
+                <Link to="/login" className="block w-full rounded-full bg-[#52670F] px-5 py-2 text-center text-sm font-black text-white">
+                  Login
+                </Link>
+              )}
             </div>
           )}
         </div>
@@ -121,7 +135,7 @@ export function Navbar() {
                 <p className="text-xs font-black tracking-[0.22em] text-[#6A7D1A] uppercase">Dashboard options</p>
                 <h2 className="text-2xl font-black text-[#14150F]">Choose your EventOS workspace</h2>
               </div>
-              <p className="text-sm text-[#5E6256] max-w-md">The dashboard button opens choices here. Selecting a role takes you to that workspace.</p>
+              <p className="text-sm text-[#5E6256] max-w-md">You are logged in once. Open any workspace from here without signing in again.</p>
             </div>
             {rolePanel}
           </div>

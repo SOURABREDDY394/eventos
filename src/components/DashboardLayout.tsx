@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { LogOut, Shield } from 'lucide-react';
-import { getDashboardRoute, useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import type { UserRole } from '@/types';
 
 function isDashboardRole(role: string | undefined): role is UserRole {
@@ -11,8 +11,10 @@ function isDashboardRole(role: string | undefined): role is UserRole {
 export function DashboardLayout({ children, title }: { children: React.ReactNode; title: string }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, loading, signOut } = useAuth();
+  const { user, loading, continueAs, signOut } = useAuth();
   const [error, setError] = useState('');
+  const [dashboardSegment, routeRole] = location.pathname.split('/').slice(1, 3);
+  const workspaceRole = dashboardSegment === 'dashboard' && isDashboardRole(routeRole) ? routeRole : user?.role;
 
   useEffect(() => {
     if (loading) return;
@@ -21,11 +23,10 @@ export function DashboardLayout({ children, title }: { children: React.ReactNode
       return;
     }
 
-    const [dashboardSegment, routeRole] = location.pathname.split('/').slice(1, 3);
     if (dashboardSegment === 'dashboard' && isDashboardRole(routeRole) && routeRole !== user.role) {
-      navigate(getDashboardRoute(user.role), { replace: true });
+      continueAs(routeRole);
     }
-  }, [loading, location.pathname, navigate, user]);
+  }, [continueAs, dashboardSegment, loading, navigate, routeRole, user]);
 
   const handleSignOut = async () => {
     setError('');
@@ -71,7 +72,7 @@ export function DashboardLayout({ children, title }: { children: React.ReactNode
               <span className="w-7 h-7 rounded-full bg-[#EEF5D9] flex items-center justify-center text-xs font-black text-[#52670F]">{initial}</span>
               <div className="leading-tight">
                 <p className="text-xs font-black text-[#14150F]">{user.full_name}</p>
-                <p className="text-[10px] text-[#6B705D] capitalize">{user.role}</p>
+                <p className="text-[10px] text-[#6B705D] capitalize">{workspaceRole}</p>
               </div>
             </div>
             <button
@@ -88,11 +89,11 @@ export function DashboardLayout({ children, title }: { children: React.ReactNode
           <div className="absolute right-0 top-0 h-36 w-56 rounded-full bg-[#DCE7BD]/70 blur-3xl" />
           <div className="relative flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
             <div>
-              <p className="text-xs font-black tracking-[0.22em] text-[#6A7D1A] uppercase">{user.role} workspace</p>
+              <p className="text-xs font-black tracking-[0.22em] text-[#6A7D1A] uppercase">{workspaceRole} workspace</p>
               <h1 className="text-3xl sm:text-5xl font-black text-[#14150F] mt-1 leading-none">{title}</h1>
             </div>
             <p className="max-w-md text-sm text-[#5E6256]">
-              Use Dashboard Options on the main page to choose Organizer, Participant, Volunteer, or Sponsor.
+              One login opens every workspace. Use Dashboard Options on the main page to move between Organizer, Participant, Volunteer, and Sponsor.
             </p>
           </div>
           {error && <p className="relative mt-3 text-xs text-red-500">{error}</p>}

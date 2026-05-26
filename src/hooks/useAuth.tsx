@@ -13,6 +13,7 @@ type AuthContextValue = {
   demoUser: DemoUser | null;
   currentRole: UserRole | null;
   loading: boolean;
+  loginDemo: () => Profile;
   continueAs: (role: UserRole) => Profile;
   signOut: () => Promise<void>;
 };
@@ -129,6 +130,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return profileFromDemoUser(nextDemoUser);
   }, []);
 
+  const loginDemo = useCallback(() => {
+    const nextDemoUser = writeDemoUser('organizer');
+    setDemoUser(nextDemoUser);
+    return profileFromDemoUser(nextDemoUser);
+  }, []);
+
   const signOut = useCallback(async () => {
     clearDemoUser();
     setDemoUser(null);
@@ -138,8 +145,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const currentRole = demoUser?.role ?? null;
 
   const value = useMemo(
-    () => ({ user, demoUser, currentRole, loading, continueAs, signOut }),
-    [user, demoUser, currentRole, loading, continueAs, signOut],
+    () => ({ user, demoUser, currentRole, loading, loginDemo, continueAs, signOut }),
+    [user, demoUser, currentRole, loading, loginDemo, continueAs, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
