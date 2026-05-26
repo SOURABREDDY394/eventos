@@ -262,6 +262,11 @@ function toDraft(edgeDraft: EdgeEventDraft): EventDraft {
   };
 }
 
+function isMissingSupabaseColumnError(error: { message?: string } | null) {
+  const message = error?.message?.toLowerCase() || '';
+  return message.includes('column') && (message.includes('does not exist') || message.includes('schema cache'));
+}
+
 async function generateDraftFromGroq(prompt: string) {
   const supabase = requireSupabase();
   const { data, error } = await supabase.functions.invoke<EdgeEventDraft>('generate-event-draft', {
@@ -291,25 +296,36 @@ async function saveDraftToSupabase(draft: EventDraft) {
     throw new Error('Creating events in Supabase requires a real Supabase Auth organizer session. The current one-click demo login is local only.');
   }
 
-  const { data: event, error: eventError } = await supabase
+  const eventPayload = {
+    organizer_id: authData.user.id,
+    title: draft.title.trim(),
+    slug: draft.slug || slugify(draft.title),
+    description: draft.description,
+    category: draft.category || 'General',
+    event_date: draft.date,
+    start_time: draft.start_time || null,
+    end_time: draft.end_time || null,
+    venue: draft.venue || null,
+    city: draft.city || null,
+    poster_url: null,
+    max_participants: draft.max_participants,
+    status: 'published',
+  };
+
+  let { data: event, error: eventError } = await supabase
     .from('events')
-    .insert({
-      organizer_id: authData.user.id,
-      title: draft.title.trim(),
-      slug: draft.slug || slugify(draft.title),
-      description: draft.description,
-      category: draft.category || 'General',
-      date: draft.date,
-      start_time: draft.start_time || null,
-      end_time: draft.end_time || null,
-      venue: draft.venue || null,
-      city: draft.city || null,
-      poster_url: null,
-      max_participants: draft.max_participants,
-      status: 'published',
-    })
+    .insert(eventPayload)
     .select('id')
     .single();
+
+  if (isMissingSupabaseColumnError(eventError)) {
+    const { event_date, ...payloadWithDate } = eventPayload;
+    ({ data: event, error: eventError } = await supabase
+      .from('events')
+      .insert({ ...payloadWithDate, date: event_date })
+      .select('id')
+      .single());
+  }
 
   if (eventError) throw new Error(eventError.message);
   if (!event?.id) throw new Error('Supabase did not return the created event id.');
