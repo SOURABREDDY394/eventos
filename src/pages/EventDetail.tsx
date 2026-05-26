@@ -4,18 +4,22 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { EventPoster } from '@/components/EventPoster';
 import store from '@/data/store';
+import { demoUsers, useAuth } from '@/hooks/useAuth';
 import { eventStatusBadgeClass, getEventDisplayStatus, isPastEvent } from '@/lib/eventLifecycle';
-import { Calendar, MapPin, Clock, ArrowLeft, CheckCircle, AlertCircle, FileText } from 'lucide-react';
+import { Calendar, MapPin, Clock, ArrowLeft, CheckCircle, AlertCircle, FileText, Handshake, HeartHandshake } from 'lucide-react';
+import type { Profile, UserRole } from '@/types';
 
 export default function EventDetail() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const event = store.getEventBySlug(slug || '');
-  const user = store.getCurrentUser();
+  const { user, continueAs } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string | boolean>>({});
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+  const [actionMessage, setActionMessage] = useState('');
+  const [, refreshActions] = useState(0);
 
   const formFields = useMemo(() => event ? store.getEventFormFields(event.id) : [], [event]);
 
@@ -28,19 +32,31 @@ export default function EventDetail() {
   }
 
   const registrations = store.getEventRegistrations(event.id);
-  const existingReg = user ? registrations.find(r => r.participant_id === user.id) : null;
+  const participantId = user?.role === 'participant' ? user.id : demoUsers.participant.id;
+  const volunteerId = user?.role === 'volunteer' ? user.id : demoUsers.volunteer.id;
+  const sponsorId = user?.role === 'sponsor' ? user.id : demoUsers.sponsor.id;
+  const existingReg = registrations.find(r => r.participant_id === participantId);
+  const existingVolunteerApp = store.getVolunteerApplicationsByUser(volunteerId).find(app => app.event_id === event.id);
+  const existingSponsorInterest = store.getSponsorInterestsBySponsor(sponsorId).find(interest => interest.event_id === event.id);
   const approvedCount = registrations.filter(reg => reg.status === 'approved' || reg.status === 'attended').length;
   const displayStatus = getEventDisplayStatus(event);
   const ended = isPastEvent(event.date);
 
-  const handleOpenForm = () => {
-    if (!user) { navigate('/login'); return; }
-    if (user.role !== 'participant') {
-      setError('Switch to Participant role to apply for events.');
-      return;
+  const ensureRole = (role: UserRole): Profile | null => {
+    if (!user) {
+      navigate('/login');
+      return null;
     }
+    if (user.role === role) return user;
+    return continueAs(role);
+  };
+
+  const handleOpenForm = () => {
+    const participant = ensureRole('participant');
+    if (!participant) return;
     setShowForm(true);
     setError('');
+    setActionMessage('Switched to Participant workspace for this application.');
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -55,11 +71,13 @@ export default function EventDetail() {
       }
     }
 
-    if (!user) { navigate('/login'); return; }
+    const participant = ensureRole('participant');
+    if (!participant) return;
+
     try {
       store.createRegistration({
         event_id: event.id,
-        participant_id: user.id,
+        participant_id: participant.id,
         registration_code: null,
         status: 'pending',
         form_answers: Object.fromEntries(formFields.map(field => [field.label, answers[field.id] ?? ''])),
@@ -69,6 +87,132 @@ export default function EventDetail() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed.');
     }
+  };
+
+  const handleVolunteerApply = () => {
+    setError('');
+    setActionMessage('');
+    if (ended) {
+      setError('Volunteer applications are closed because this event has ended.');
+      return;
+    }
+    const volunteer = ensureRole('volunteer');
+    if (!volunteer) return;
+
+    if (store.getVolunteerApplicationsByUser(volunteer.id).some(app => app.event_id === event.id)) {
+      setActionMessage('You already submitted a volunteer application for this event.');
+      return;
+    }
+
+    try {
+      const roleRequested = event.category.toLowerCase().includes('gaming') || event.category.toLowerCase().includes('esports')
+        ? 'Tournament Support'
+        : 'Event Support';
+      store.createVolunteerApplication({
+        event_id: event.id,
+        volunteer_id: volunteer.id,
+        role_requested: roleRequested,
+        skills: [],
+        availability: 'Flexible',
+        reason: `I want to support ${event.title}.`,
+        status: 'pending',
+      });
+      setActionMessage('Volunteer application submitted. Waiting for organizer approval.');
+      refreshActions(value => value + 1);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Volunteer application failed.');
+    }
+  };
+
+  const handleSponsorInterest = () => {
+    setError('');
+    setActionMessage('');
+    if (ended) {
+      setError('Sponsor interest is closed because this event has ended.');
+      return;
+    }
+    const sponsor = ensureRole('sponsor');
+    if (!sponsor) return;
+
+    if (store.getSponsorInterestsBySponsor(sponsor.id).some(interest => interest.event_id === event.id)) {
+      setActionMessage('Sponsor interest already submitted for this event.');
+      return;
+    }
+
+    try {
+      store.createSponsorInterest({
+        event_id: event.id,
+        sponsor_id: sponsor.id,
+        package_id: undefined,
+        company_name: sponsor.full_name || 'Sponsor Partner',
+        message: `Interested in sponsoring ${event.title}.`,
+        status: 'new',
+      });
+      setActionMessage('Sponsor interest submitted. The organizer can now review it.');
+      refreshActions(value => value + 1);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Sponsor interest failed.');
+    }
+  };
+
+  const renderVolunteerState = () => {
+    if (existingVolunteerApp) {
+      return (
+        <div className="rounded-xl border border-[#D9D0B8] bg-white/60 p-4">
+          <div className="flex items-center justify-between gap-3 mb-2">
+            <p className="text-sm font-black text-[#14150F]">Volunteer</p>
+            <span className="text-[10px] px-2 py-1 rounded-full bg-amber-100 text-[#52670F] capitalize">{existingVolunteerApp.status}</span>
+          </div>
+          <p className="text-xs text-[#5E6256]">Role: {existingVolunteerApp.role_requested || 'Event Support'}</p>
+          <button onClick={() => navigate('/dashboard/volunteer/applications')} className="ghost-btn w-full text-xs rounded-full mt-3">
+            View Volunteer Applications
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="rounded-xl border border-[#D9D0B8] bg-white/60 p-4">
+        <div className="w-10 h-10 rounded-full bg-[#52670F]/10 flex items-center justify-center mb-3">
+          <HeartHandshake className="w-5 h-5 text-[#52670F]" />
+        </div>
+        <p className="text-sm font-black text-[#14150F] mb-1">Volunteer for this event</p>
+        <p className="text-xs text-[#5E6256] mb-3">Submit a volunteer application and let the organizer approve your role.</p>
+        <button onClick={handleVolunteerApply} disabled={ended} className="ghost-btn w-full text-xs rounded-full disabled:opacity-50">
+          Apply as Volunteer
+        </button>
+      </div>
+    );
+  };
+
+  const renderSponsorState = () => {
+    if (existingSponsorInterest) {
+      return (
+        <div className="rounded-xl border border-[#D9D0B8] bg-white/60 p-4">
+          <div className="flex items-center justify-between gap-3 mb-2">
+            <p className="text-sm font-black text-[#14150F]">Sponsor</p>
+            <span className="text-[10px] px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 capitalize">{existingSponsorInterest.status}</span>
+          </div>
+          <p className="text-xs text-[#5E6256]">Your sponsor interest has been sent to the organizer.</p>
+          <button onClick={() => navigate('/dashboard/sponsor/interests')} className="ghost-btn w-full text-xs rounded-full mt-3">
+            View Sponsor Interests
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="rounded-xl border border-[#D9D0B8] bg-white/60 p-4">
+        <div className="w-10 h-10 rounded-full bg-[#E49B3A]/10 flex items-center justify-center mb-3">
+          <Handshake className="w-5 h-5 text-[#A76A19]" />
+        </div>
+        <p className="text-sm font-black text-[#14150F] mb-1">Sponsor this event</p>
+        <p className="text-xs text-[#5E6256] mb-3">Send sponsor interest so the organizer can contact you.</p>
+        <button onClick={handleSponsorInterest} disabled={ended} className="ghost-btn w-full text-xs rounded-full disabled:opacity-50">
+          Submit Sponsor Interest
+        </button>
+      </div>
+    );
   };
 
   const renderRegistrationState = () => {
@@ -194,6 +338,8 @@ export default function EventDetail() {
 
           <div>
             <div className="glass-card rounded-xl p-6 sticky top-24">
+              {actionMessage && <p className="mb-3 text-xs text-emerald-700 bg-emerald-100 border border-emerald-200 rounded-lg p-3">{actionMessage}</p>}
+              {error && <p className="mb-3 text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg p-3">{error}</p>}
               <div className="flex items-center justify-between mb-4">
                 <span className="text-xs text-white/40">Approved Tickets</span>
                 <span className="text-xs text-white/40">{approvedCount} / {event.max_participants}</span>
@@ -203,6 +349,10 @@ export default function EventDetail() {
               </div>
 
               {renderRegistrationState()}
+              <div className="mt-5 space-y-4">
+                {renderVolunteerState()}
+                {renderSponsorState()}
+              </div>
             </div>
           </div>
         </div>
