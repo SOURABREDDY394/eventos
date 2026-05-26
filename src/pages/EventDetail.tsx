@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { EventPoster } from '@/components/EventPoster';
+import { EventLocationMap } from '@/components/EventLocationMap';
 import store from '@/data/store';
 import { demoUsers, useAuth } from '@/hooks/useAuth';
 import { useSyncedEventBySlug } from '@/hooks/useSyncedEvents';
@@ -334,6 +335,8 @@ export default function EventDetail() {
                 <p className="text-sm text-white">{event.city}</p>
               </div>
             </div>
+
+            <EventLocationMap event={event} />
           </div>
 
           <div>

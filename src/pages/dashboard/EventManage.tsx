@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from 'react-router';
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import { EventLocationMap } from '@/components/EventLocationMap';
 import { EventPoster } from '@/components/EventPoster';
 import store from '@/data/store';
 import { createLocalPosterDataUrl, uploadEventPoster } from '@/lib/eventPosterUpload';
@@ -142,6 +143,10 @@ export default function EventManage() {
           </div>
           <span className={`text-[10px] px-2 py-0.5 rounded-full border ${eventStatusBadgeClass(displayStatus)}`}>{displayStatus}</span>
         </div>
+      </div>
+
+      <div className="mb-8">
+        <EventLocationMap event={event} variant="dark" />
       </div>
 
       <div className="mb-8 glass-card rounded-xl p-5">
