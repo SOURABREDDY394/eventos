@@ -1,73 +1,144 @@
-# React + TypeScript + Vite
+# EventOS
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+EventOS is an event-tech MVP for creating, managing, and verifying events. The product story is simple: organizers create events, participants browse and apply, organizers approve applications, approved participants receive QR tickets, attendance is verified, and certificates/proof records can become part of a public Proof Passport.
 
-Currently, two official plugins are available:
+The app is built as a Vite React frontend with Supabase schema, storage, and Edge Function support. Demo access is currently one-click local access for fast project review, while event data infrastructure and Groq-backed AI generation are prepared through Supabase.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Project Overview
 
-## React Compiler
+EventOS focuses on two primary experiences:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Organizer experience: create and manage events, including AI-assisted event draft generation, manual event creation, registration forms, application review, attendance, volunteers, sponsors, budget, and certificates.
+- Participant experience: browse upcoming events, submit approval-based registrations, track pending/approved/rejected applications, view QR tickets after approval, and access certificates/proof.
 
-## Expanding the ESLint configuration
+Supporting workspaces are included for:
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- Volunteers: applications, assigned tasks, completed hours, skills, and proof records.
+- Sponsors: browse events and manage sponsor interests.
+- Public proof: Proof Passport and certificate verification routes.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Setup Instructions
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### 1. Install dependencies
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. Configure frontend environment
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Create `.env.local` in the project root:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
+
+Do not add `GROQ_API_KEY` to any Vite env file. Vite env variables are exposed to the browser.
+
+### 3. Run the app locally
+
+```bash
+npm run dev
+```
+
+If port `5173` is busy, Vite may choose another port such as `3000`.
+
+### 4. Build for production
+
+```bash
+npm run build
+```
+
+### 5. Set up Supabase database
+
+Run the SQL migrations in `supabase/migrations` in your Supabase project, starting with:
+
+```text
+supabase/migrations/001_eventos_schema.sql
+```
+
+The schema includes tables for profiles, events, registrations, attendance, event form fields, volunteers, sponsors, budgets, certificates, proof records, and storage buckets.
+
+### 6. Deploy Groq Edge Functions
+
+Set the Groq key as a Supabase secret:
+
+```bash
+supabase secrets set GROQ_API_KEY=your_groq_key
+```
+
+Deploy the event draft function:
+
+```bash
+supabase functions deploy generate-event-draft
+```
+
+Optional sponsor pitch function:
+
+```bash
+supabase functions deploy generate-sponsor-pitch
+```
+
+Optional model override:
+
+```bash
+supabase secrets set GROQ_MODEL=llama-3.3-70b-versatile
+```
+
+Important: the current app uses one-click demo login for review. Real Supabase writes protected by RLS, such as inserting events into `public.events`, require a real Supabase Auth organizer session or a secure server-side create-event flow.
+
+## Features Implemented
+
+- Premium EventOS landing page with AI event creation prompt.
+- One-click demo login for fast access to the product.
+- Dashboard workspace routing for Organizer, Participant, Volunteer, and Sponsor.
+- AI Create Event page wired to a secure Supabase Edge Function for Groq-powered structured event draft generation.
+- Editable event draft form after AI generation.
+- Manual event creation flow.
+- Event poster upload helper and public event poster/fallback display.
+- Public events listing with upcoming/past lifecycle filtering.
+- Event detail page with approval-based registration flow.
+- Registration statuses: pending, approved, rejected, attended, cancelled.
+- Organizer registration review with approve/reject behavior.
+- Participant applications and tickets pages with pending/approved/rejected states.
+- QR ticket availability only after approval.
+- Attendance logic guarded by registration status.
+- Volunteer module with applications, task tracking, completed hours, skills, and proof records.
+- Sponsor module with event browsing and sponsor interests.
+- Budget and certificate management surfaces.
+- Public Proof Passport and certificate verification routes.
+- Supabase database migrations and RLS policies.
+- Supabase Storage buckets for event posters and certificates.
+- Supabase Edge Function for Groq sponsor pitch generation.
+
+## Tech Stack Used
+
+- React 19
+- TypeScript
+- Vite
+- React Router
+- Tailwind CSS
+- Radix UI primitives
+- Lucide React icons
+- Supabase JavaScript client
+- Supabase PostgreSQL, Row Level Security, Storage, and Edge Functions
+- Groq API through Supabase Edge Functions
+- QR code rendering with `qrcode.react`
+- Charts with Recharts
+- Toasts with Sonner
+
+## Useful Commands
+
+```bash
+npm run dev
+npm run build
+npm run lint
+npm run preview
+```
+
+## Repository Notes
+
+- `.env.local` is ignored and should not be committed.
+- `dist`, `node_modules`, and local scrape/reference files are ignored.
+- Groq keys must live only in Supabase secrets, never in frontend environment variables.
