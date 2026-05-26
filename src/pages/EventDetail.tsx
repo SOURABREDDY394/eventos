@@ -335,8 +335,6 @@ export default function EventDetail() {
                 <p className="text-sm text-white">{event.city}</p>
               </div>
             </div>
-
-            <EventLocationMap event={event} />
           </div>
 
           <div>
@@ -358,6 +356,10 @@ export default function EventDetail() {
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="mt-8">
+          <EventLocationMap event={event} />
         </div>
       </div>
 

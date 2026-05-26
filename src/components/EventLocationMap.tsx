@@ -38,8 +38,8 @@ export function EventLocationMap({ event, variant = 'light' }: { event: Event; v
         <div className="absolute inset-x-8 top-1/2 hidden border-t border-dashed border-[#52670F]/18 lg:block" />
       </div>
 
-      <div className={`relative grid ${isCompact ? 'lg:grid-cols-[0.84fr_1.16fr]' : 'lg:grid-cols-[0.9fr_1.1fr]'}`}>
-        <aside className="relative p-5 sm:p-7 lg:p-8">
+      <div className={`relative grid ${isCompact ? 'lg:grid-cols-[0.95fr_1.05fr]' : 'lg:grid-cols-[0.98fr_1.02fr]'} items-stretch`}>
+        <aside className="relative flex flex-col p-5 sm:p-7 lg:p-8">
           <div className="absolute right-0 top-8 hidden h-[calc(100%-4rem)] w-px bg-gradient-to-b from-transparent via-[#CFC4A7] to-transparent lg:block" />
 
           <div className="inline-flex items-center gap-2 rounded-full border border-[#D7E3B3] bg-[#FCFAF1]/80 px-3 py-2 shadow-sm">
@@ -52,17 +52,17 @@ export function EventLocationMap({ event, variant = 'light' }: { event: Event; v
             </div>
           </div>
 
-          <h2 className="mt-7 max-w-md text-4xl font-black leading-[0.95] tracking-[-0.02em] sm:text-5xl">
+          <h2 className="mt-7 max-w-2xl text-4xl font-black leading-[0.96] tracking-[-0.02em] sm:text-5xl xl:text-6xl">
             Know the room before you arrive.
           </h2>
 
-          <p className="mt-5 max-w-md text-sm leading-7 text-[#5E6256]">
+          <p className="mt-5 max-w-2xl text-sm leading-7 text-[#5E6256] sm:text-base">
             {hasLocation
               ? 'EventOS turns the venue into a clear arrival checkpoint, so participants, volunteers, sponsors, and organizers see the same location truth.'
               : 'The organizer has not added a venue yet. Add a city or venue to unlock the live map preview.'}
           </p>
 
-          <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+          <div className="mt-7 grid gap-3 sm:grid-cols-2">
             <div className="group rounded-[1.35rem] border border-[#E1D8BE] bg-[#FFFCF3]/82 p-4 shadow-[0_16px_34px_rgba(82,103,15,0.08)] transition-transform hover:-translate-y-1">
               <div className="flex items-start gap-3">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F7E5BE] text-[#A76A19]">
@@ -92,7 +92,7 @@ export function EventLocationMap({ event, variant = 'light' }: { event: Event; v
             href={mapsUrl}
             target="_blank"
             rel="noreferrer"
-            className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#52670F] px-5 py-3.5 text-sm font-black text-white shadow-[0_16px_34px_rgba(82,103,15,0.22)] transition-transform hover:-translate-y-1 hover:bg-[#43540C] sm:w-auto"
+            className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#52670F] px-5 py-3.5 text-sm font-black text-white shadow-[0_16px_34px_rgba(82,103,15,0.22)] transition-transform hover:-translate-y-1 hover:bg-[#43540C] sm:w-fit"
           >
             <Navigation className="h-4 w-4" />
             Open in Google Maps
@@ -102,7 +102,7 @@ export function EventLocationMap({ event, variant = 'light' }: { event: Event; v
 
         <div className="relative min-h-[23rem] p-4 sm:p-6 lg:p-8">
           {hasLocation ? (
-            <div className="relative min-h-[23rem]">
+            <div className="relative h-full min-h-[23rem]">
               <div className="absolute -left-3 top-8 hidden h-24 w-24 rounded-full border border-dashed border-[#AAB878] lg:block" />
               <div className="absolute -right-2 bottom-10 hidden h-16 w-16 rounded-full bg-[#F5C66C]/50 blur-xl lg:block" />
 
@@ -130,7 +130,7 @@ export function EventLocationMap({ event, variant = 'light' }: { event: Event; v
                 </a>
               </div>
 
-              <div className="pointer-events-none absolute -bottom-4 left-4 right-4 grid gap-3 sm:grid-cols-2">
+              <div className="pointer-events-none absolute bottom-4 left-4 right-4 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-[1.35rem] border border-[#E4D7B6] bg-[#FFFCF3]/92 p-4 text-[#14150F] shadow-[0_18px_44px_rgba(20,21,15,0.16)] backdrop-blur-md">
                   <div className="flex items-center gap-2 text-[#A76A19]">
                     <Compass className="h-4 w-4" />
