@@ -73,6 +73,133 @@ function getCurrentDate() {
   return `${year}-${month}-${day}`;
 }
 
+const monthNames: Record<string, number> = {
+  january: 0, jan: 0,
+  february: 1, feb: 1,
+  march: 2, mar: 2,
+  april: 3, apr: 3,
+  may: 4,
+  june: 5, jun: 5,
+  july: 6, jul: 6,
+  august: 7, aug: 7,
+  september: 8, sep: 8,
+  october: 9, oct: 9,
+  november: 10, nov: 10,
+  december: 11, dec: 11,
+};
+
+function formatDateInput(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function parsePromptDate(prompt: string) {
+  const lower = prompt.toLowerCase();
+  const match = lower.match(/\b(\d{1,2})(?:st|nd|rd|th)?\s+(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b/)
+    || lower.match(/\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+(\d{1,2})(?:st|nd|rd|th)?\b/);
+  if (!match) return '';
+
+  const first = match[1];
+  const second = match[2];
+  const day = Number(/\d/.test(first) ? first : second);
+  const monthKey = /\d/.test(first) ? second : first;
+  const month = monthNames[monthKey];
+  if (!Number.isFinite(day) || month === undefined) return '';
+
+  const today = new Date();
+  let candidate = new Date(today.getFullYear(), month, day);
+  if (candidate < new Date(today.getFullYear(), today.getMonth(), today.getDate())) {
+    candidate = new Date(today.getFullYear() + 1, month, day);
+  }
+  return formatDateInput(candidate);
+}
+
+function inferPromptBasics(prompt: string) {
+  const lower = prompt.toLowerCase();
+  if (/\b(pubg|bgmi|free fire|esports|gaming)\b/.test(lower)) {
+    return {
+      title: lower.includes('bgmi') ? 'BGMI Tournament' : 'PUBG Tournament',
+      category: 'Gaming / Esports',
+      seats: 50,
+      description: 'PUBG Tournament is a competitive gaming event where players compete in structured matches with organizer-reviewed registrations. Approved participants receive access details and QR-based check-in, while winners and verified participation can later become certificates and Proof Passport records.',
+    };
+  }
+  if (/\b(ai|machine learning|gen ai|artificial intelligence)\b/.test(lower)) {
+    return {
+      title: 'AI Workshop',
+      category: 'Technology / AI',
+      seats: 100,
+      description: 'AI Workshop is a practical learning event for participants who want hands-on exposure to modern AI concepts, tools, and workflows. Registrations require organizer approval, approved attendees receive QR check-in access, and verified participation can become certificates and Proof Passport records.',
+    };
+  }
+  if (/\b(hackathon|coding)\b/.test(lower)) {
+    return {
+      title: lower.includes('24') ? '24-Hour Hackathon' : 'Hackathon',
+      category: 'Hackathon / Technology',
+      seats: 200,
+      description: 'Hackathon is a build-focused event where participants work on ideas, prototypes, and problem-solving in a structured event flow. Organizer approval controls participant access, and verified attendance can support certificates and Proof Passport records.',
+    };
+  }
+  if (/\b(dance|music|cultural|fest)\b/.test(lower)) {
+    return {
+      title: 'Cultural Event',
+      category: 'Cultural',
+      seats: 100,
+      description: 'Cultural Event brings participants together for a curated program with organizer-approved registrations, smooth event check-in, and verified participation records through EventOS.',
+    };
+  }
+  return {
+    title: 'EventOS Event',
+    category: 'General',
+    seats: 100,
+    description: 'This event is organized with registration approval, check-in management, and participant verification through EventOS. Approved attendees receive event access details, and verified participation can later support certificates and Proof Passport records.',
+  };
+}
+
+function generateLocalDraftFromPrompt(prompt: string, reason?: string): EventDraft {
+  const basics = inferPromptBasics(prompt);
+  const lower = prompt.toLowerCase();
+  const seats = Number(lower.match(/\b(\d{1,5})\s*(?:seat|seats|people|students|participants|players)\b/)?.[1]) || basics.seats;
+  const city = ['hyderabad', 'bangalore', 'bengaluru', 'mumbai', 'delhi', 'pune', 'chennai'].find(name => lower.includes(name)) || '';
+  const eventDate = parsePromptDate(prompt);
+
+  return {
+    title: basics.title,
+    slug: slugify(`${basics.title}-${Date.now().toString().slice(-4)}`),
+    description: basics.description,
+    category: basics.category,
+    date: eventDate,
+    start_time: '10:00',
+    end_time: '16:00',
+    venue: 'To be announced',
+    city: city ? city[0].toUpperCase() + city.slice(1) : '',
+    max_participants: seats,
+    formFields: [
+      { label: 'Full Name', field_type: 'text', required: true, options: [], sort_order: 0 },
+      { label: 'Email', field_type: 'email', required: true, options: [], sort_order: 1 },
+      { label: 'Phone Number', field_type: 'phone', required: true, options: [], sort_order: 2 },
+      { label: 'College / Organization', field_type: 'text', required: false, options: [], sort_order: 3 },
+      { label: 'Why do you want to attend?', field_type: 'textarea', required: false, options: [], sort_order: 4 },
+    ],
+    volunteerRoles: [{ role_name: basics.category.includes('Gaming') ? 'Tournament Support' : 'Event Support', description: 'Support registrations, coordination, and event-day operations.', required_count: 2, skills: [] }],
+    sponsorPackages: [{ title: 'Community Sponsor', description: 'Visibility across event communication and organizer follow-up.', benefits: ['Logo visibility', 'Mention in event updates'] }],
+    budgetCategories: [
+      { type: 'income', title: 'Registration or sponsorship income' },
+      { type: 'expense', title: 'Venue and operations' },
+      { type: 'expense', title: 'Certificates and logistics' },
+    ],
+    certificateEnabled: true,
+    certificateSetup: 'Certificates are prepared for attended participants after organizer verification.',
+    analysis: {
+      foundEventType: basics.title,
+      foundDate: Boolean(eventDate),
+      warnings: [
+        ...(eventDate ? [] : ['Date was not found. Please choose a date.']),
+        ...(reason ? [`AI backend failed, so EventOS used a local prompt parser: ${reason}`] : []),
+      ],
+    },
+  };
+}
+
 function toDraft(edgeDraft: EdgeEventDraft): EventDraft {
   const title = (edgeDraft.title || '').trim();
   const category = (edgeDraft.category || '').trim();
@@ -265,8 +392,8 @@ export default function AICreateEvent() {
       const nextDraft = await generateDraftFromGroq(promptToGenerate);
       setDraft(nextDraft);
     } catch (err) {
-      setDraft(null);
-      setError(err instanceof Error ? err.message : 'AI event generation is not configured or failed. Please try manual event creation.');
+      const reason = err instanceof Error ? err.message : 'AI event generation failed.';
+      setDraft(generateLocalDraftFromPrompt(promptToGenerate, reason));
     } finally {
       setLoading(false);
     }
