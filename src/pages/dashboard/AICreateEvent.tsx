@@ -73,6 +73,12 @@ function getCurrentDate() {
   return `${year}-${month}-${day}`;
 }
 
+function getDefaultEventDate() {
+  const date = new Date();
+  date.setDate(date.getDate() + 14);
+  return formatDateInput(date);
+}
+
 const monthNames: Record<string, number> = {
   january: 0, jan: 0,
   february: 1, feb: 1,
@@ -160,7 +166,8 @@ function generateLocalDraftFromPrompt(prompt: string, reason?: string): EventDra
   const lower = prompt.toLowerCase();
   const seats = Number(lower.match(/\b(\d{1,5})\s*(?:seat|seats|people|students|participants|players)\b/)?.[1]) || basics.seats;
   const city = ['hyderabad', 'bangalore', 'bengaluru', 'mumbai', 'delhi', 'pune', 'chennai'].find(name => lower.includes(name)) || '';
-  const eventDate = parsePromptDate(prompt);
+  const parsedDate = parsePromptDate(prompt);
+  const eventDate = parsedDate || getDefaultEventDate();
 
   return {
     title: basics.title,
@@ -191,9 +198,9 @@ function generateLocalDraftFromPrompt(prompt: string, reason?: string): EventDra
     certificateSetup: 'Certificates are prepared for attended participants after organizer verification.',
     analysis: {
       foundEventType: basics.title,
-      foundDate: Boolean(eventDate),
+      foundDate: Boolean(parsedDate),
       warnings: [
-        ...(eventDate ? [] : ['Date was not found. Please choose a date.']),
+        ...(parsedDate ? [] : ['Date was not found. EventOS used an editable upcoming demo date.']),
         ...(reason ? [`AI backend failed, so EventOS used a local prompt parser: ${reason}`] : []),
       ],
     },
@@ -204,14 +211,18 @@ function toDraft(edgeDraft: EdgeEventDraft): EventDraft {
   const title = (edgeDraft.title || '').trim();
   const category = (edgeDraft.category || '').trim();
   const fields = Array.isArray(edgeDraft.registration_fields) ? edgeDraft.registration_fields : [];
-  const warnings = Array.isArray(edgeDraft.warnings) ? edgeDraft.warnings.filter(Boolean) : [];
+  const foundDate = Boolean(edgeDraft.event_date);
+  const warnings = [
+    ...(Array.isArray(edgeDraft.warnings) ? edgeDraft.warnings.filter(Boolean) : []),
+    ...(foundDate ? [] : ['Date was not found. EventOS used an editable upcoming demo date.']),
+  ];
 
   return {
     title,
     slug: slugify(`${title || 'event'}-${Date.now().toString().slice(-4)}`),
     description: edgeDraft.description || '',
     category,
-    date: edgeDraft.event_date || '',
+    date: edgeDraft.event_date || getDefaultEventDate(),
     start_time: edgeDraft.start_time || '10:00',
     end_time: edgeDraft.end_time || '16:00',
     venue: edgeDraft.venue || 'To be announced',
@@ -245,7 +256,7 @@ function toDraft(edgeDraft: EdgeEventDraft): EventDraft {
       : 'Certificates are prepared for attended participants after organizer verification.',
     analysis: {
       foundEventType: title || 'Review needed',
-      foundDate: Boolean(edgeDraft.event_date),
+      foundDate,
       warnings,
     },
   };
