@@ -1,7 +1,9 @@
 import type {
   Profile, Event, Registration, VolunteerApplication, VolunteerTask,
-  SponsorPackage, SponsorInterest, BudgetItem, Certificate, PassportRecord, VolunteerRole, EventFormField, Attendance
+  SponsorPackage, SponsorInterest, BudgetItem, Certificate, PassportRecord, VolunteerRole, EventFormField, Attendance,
+  VolunteerProfile, VolunteerPointsEntry, LeaderboardEntry
 } from '@/types';
+import { pushRemote, pullRemote } from '@/lib/persistence';
 import {
   seedProfiles, seedEvents, seedRegistrations, seedVolunteerApplications,
   seedVolunteerTasks, seedSponsorPackages, seedSponsorInterests,
@@ -24,6 +26,15 @@ const STORAGE_KEYS = {
   certificates: 'eventos_certificates',
   passportRecords: 'eventos_passport_records',
   currentUser: 'eventos_current_user',
+  volunteerProfiles: 'eventos_volunteer_profiles',
+  volunteerPoints: 'eventos_volunteer_points',
+};
+
+// Points awarded per volunteer action (feature 6 — gamified leaderboard).
+export const POINTS = {
+  taskCompleted: 50,
+  perHour: 10,
+  checkInHandled: 15,
 };
 
 const DEMO_ROLE_KEY = 'currentRole';
@@ -75,6 +86,18 @@ function initStore() {
 initStore();
 
 function genId() { return crypto.randomUUID?.() || Math.random().toString(36).substring(2); }
+
+// Feature 6 — derive volunteer badges from contribution milestones.
+function badgesFor(points: number, tasksCompleted: number, checkInsHandled: number, hours: number): string[] {
+  const badges: string[] = [];
+  if (points >= 300) badges.push('Champion');
+  else if (points >= 150) badges.push('Pro');
+  else if (points >= 50) badges.push('Rising Star');
+  if (tasksCompleted >= 3) badges.push('Task Master');
+  if (checkInsHandled >= 5) badges.push('Check-in Hero');
+  if (hours >= 10) badges.push('Marathoner');
+  return badges;
+}
 
 function generateRegistrationCode() {
   return `EVOS-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
@@ -548,6 +571,191 @@ export const store = {
     certs.push(newCert);
     setItem(STORAGE_KEYS.certificates, certs);
     return newCert;
+  },
+  // Feature 2 — issue a certificate and mirror it to Supabase (etrack_certificates).
+  issueCertificate(input: { event: Event; userId: string; userName: string; role?: string; organizerName?: string }): Certificate {
+    const code = `CERT-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    const cert = store.createCertificate({
+      event_id: input.event.id,
+      user_id: input.userId,
+      certificate_code: code,
+      role: input.role || 'Participant',
+    });
+    void pushRemote('etrack_certificates', {
+      id: cert.id,
+      event_id: input.event.id,
+      event_title: input.event.title,
+      user_id: input.userId,
+      user_name: input.userName,
+      certificate_code: code,
+      role: cert.role,
+      organizer_name: input.organizerName || '',
+      event_date: input.event.date,
+      issued_at: cert.issued_at,
+    });
+    return cert;
+  },
+
+  // Feature 1 — QR / manual check-in. Marks attendance, writes a passport
+  // record, mirrors to Supabase (etrack_check_ins), and (optionally) credits
+  // the volunteer who handled the desk with leaderboard points.
+  checkInRegistration(reg: Registration, options?: { method?: 'manual' | 'qr'; handledById?: string; handledByName?: string }): Attendance {
+    const event = store.getEventById(reg.event_id);
+    store.updateRegistration(reg.id, { status: 'attended' });
+    const attendance = store.createAttendance({
+      event_id: reg.event_id,
+      registration_id: reg.id,
+      participant_id: reg.participant_id,
+      checked_in_by: options?.handledById || store.getCurrentUser()?.id,
+      status: 'present',
+    });
+    store.createPassportRecord({
+      user_id: reg.participant_id,
+      event_id: reg.event_id,
+      record_type: 'attendance',
+      title: event?.title || 'Event',
+      description: 'Attended as Participant',
+      skills: event ? [event.category] : [],
+      hours: 0,
+      verified_at: new Date().toISOString(),
+    });
+    const participant = store.getProfileById(reg.participant_id);
+    void pushRemote('etrack_check_ins', {
+      id: attendance.id,
+      event_id: reg.event_id,
+      registration_id: reg.id,
+      participant_id: reg.participant_id,
+      participant_name: participant?.full_name || reg.participant?.full_name || '',
+      registration_code: reg.registration_code || '',
+      checked_in_by: options?.handledById || store.getCurrentUser()?.id || '',
+      handled_by_name: options?.handledByName || '',
+      method: options?.method || 'manual',
+      status: 'present',
+      checked_in_at: attendance.checked_in_at,
+    }, 'registration_id');
+    if (options?.handledById) {
+      store.addVolunteerPoints(options.handledById, POINTS.checkInHandled, 'Check-in handled', reg.event_id, options.handledByName);
+    }
+    return attendance;
+  },
+
+  // Feature 5 — Volunteer skills + availability profiles.
+  getVolunteerProfiles(): VolunteerProfile[] {
+    return getItem<VolunteerProfile[]>(STORAGE_KEYS.volunteerProfiles, []);
+  },
+  getVolunteerProfile(userId: string): VolunteerProfile | undefined {
+    return store.getVolunteerProfiles().find(p => p.user_id === userId);
+  },
+  saveVolunteerProfile(profile: Omit<VolunteerProfile, 'updated_at'>): VolunteerProfile {
+    const profiles = store.getVolunteerProfiles();
+    const next: VolunteerProfile = { ...profile, updated_at: new Date().toISOString() };
+    const idx = profiles.findIndex(p => p.user_id === profile.user_id);
+    if (idx === -1) profiles.push(next); else profiles[idx] = next;
+    setItem(STORAGE_KEYS.volunteerProfiles, profiles);
+    void pushRemote('etrack_volunteer_profiles', {
+      user_id: next.user_id,
+      full_name: next.full_name || '',
+      skills: next.skills,
+      availability: next.availability,
+      recommended_roles: next.recommended_roles || [],
+      updated_at: next.updated_at,
+    }, 'user_id');
+    return next;
+  },
+
+  // Feature 6 — Volunteer points ledger.
+  getVolunteerPoints(): VolunteerPointsEntry[] {
+    return getItem<VolunteerPointsEntry[]>(STORAGE_KEYS.volunteerPoints, []);
+  },
+  addVolunteerPoints(userId: string, points: number, reason: string, eventId?: string, fullName?: string): VolunteerPointsEntry {
+    const entries = store.getVolunteerPoints();
+    const name = fullName || store.getProfileById(userId)?.full_name;
+    const entry: VolunteerPointsEntry = {
+      id: genId(), user_id: userId, full_name: name, points, reason, event_id: eventId,
+      created_at: new Date().toISOString(),
+    };
+    entries.push(entry);
+    setItem(STORAGE_KEYS.volunteerPoints, entries);
+    void pushRemote('etrack_volunteer_points', { ...entry, full_name: name || '' });
+    return entry;
+  },
+
+  // Pull the new-feature tables back from Supabase into the local cache so
+  // data persists across devices/sessions when migration 005 is applied.
+  async hydrateEtrack(): Promise<void> {
+    const [profiles, points] = await Promise.all([
+      pullRemote<VolunteerProfile>('etrack_volunteer_profiles'),
+      pullRemote<VolunteerPointsEntry>('etrack_volunteer_points'),
+    ]);
+    if (profiles && profiles.length) {
+      const local = store.getVolunteerProfiles();
+      const merged = new Map<string, VolunteerProfile>();
+      [...local, ...profiles].forEach(p => merged.set(p.user_id, {
+        user_id: p.user_id,
+        full_name: p.full_name,
+        skills: Array.isArray(p.skills) ? p.skills : [],
+        availability: p.availability || '',
+        recommended_roles: p.recommended_roles || [],
+        updated_at: p.updated_at || new Date().toISOString(),
+      }));
+      setItem(STORAGE_KEYS.volunteerProfiles, Array.from(merged.values()));
+    }
+    if (points && points.length) {
+      const local = store.getVolunteerPoints();
+      const byId = new Map<string, VolunteerPointsEntry>();
+      [...local, ...points].forEach(p => byId.set(p.id, p));
+      setItem(STORAGE_KEYS.volunteerPoints, Array.from(byId.values()));
+    }
+  },
+
+  // Feature 6 — Computed leaderboard from completed tasks, hours, check-ins
+  // handled, plus any manual bonus points in the ledger.
+  getVolunteerLeaderboard(): LeaderboardEntry[] {
+    const tasks = store.getVolunteerTasks();
+    const attendance = store.getAttendance();
+    const bonus = store.getVolunteerPoints();
+    const profiles = store.getProfiles();
+
+    const ids = new Set<string>();
+    tasks.forEach(t => { const id = t.assigned_to || t.volunteer_id; if (id) ids.add(id); });
+    attendance.forEach(a => { if (a.checked_in_by) ids.add(a.checked_in_by); });
+    bonus.forEach(b => ids.add(b.user_id));
+    profiles.filter(p => p.role === 'volunteer').forEach(p => ids.add(p.id));
+
+    const rows = Array.from(ids).map((userId) => {
+      const userTasks = tasks.filter(t => (t.assigned_to || t.volunteer_id) === userId);
+      const completed = userTasks.filter(t => t.status === 'completed');
+      const hours = completed.reduce((s, t) => s + (t.hours || 0), 0);
+      const checkInsHandled = attendance.filter(a => a.checked_in_by === userId).length;
+      const ledger = bonus.filter(b => b.user_id === userId);
+      const ledgerPoints = ledger.reduce((s, b) => s + b.points, 0);
+      const taskLedger = ledger.filter(b => b.reason.startsWith('Task completed')).reduce((s, b) => s + b.points, 0);
+      const hourLedger = ledger.filter(b => b.reason.startsWith('Volunteer hours')).reduce((s, b) => s + b.points, 0);
+      const checkInLedger = ledger.filter(b => b.reason === 'Check-in handled').reduce((s, b) => s + b.points, 0);
+      const otherLedger = ledgerPoints - taskLedger - hourLedger - checkInLedger;
+      const points =
+        Math.max(completed.length * POINTS.taskCompleted, taskLedger) +
+        Math.max(hours * POINTS.perHour, hourLedger) +
+        Math.max(checkInsHandled * POINTS.checkInHandled, checkInLedger) +
+        otherLedger;
+      const profile = profiles.find(p => p.id === userId);
+      const name = profile?.full_name || ledger[0]?.full_name || userTasks[0]?.assignee?.full_name || 'Volunteer';
+      return {
+        user_id: userId,
+        full_name: name,
+        points,
+        tasksCompleted: completed.length,
+        hours,
+        checkInsHandled,
+        badges: badgesFor(points, completed.length, checkInsHandled, hours),
+        rank: 0,
+      } as LeaderboardEntry;
+    });
+
+    return rows
+      .filter(r => r.points > 0 || r.tasksCompleted > 0 || r.checkInsHandled > 0)
+      .sort((a, b) => b.points - a.points)
+      .map((row, index) => ({ ...row, rank: index + 1 }));
   },
 
   // Passport Records

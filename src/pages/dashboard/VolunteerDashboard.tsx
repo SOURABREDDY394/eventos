@@ -3,7 +3,7 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { EventPoster } from '@/components/EventPoster';
 import store from '@/data/store';
 import { useSyncedPublishedEvents } from '@/hooks/useSyncedEvents';
-import { Award, Calendar, Clock, ClipboardList, HeartHandshake, MapPin, Shield, Sparkles, Wrench } from 'lucide-react';
+import { Award, Calendar, Clock, ClipboardList, HeartHandshake, MapPin, Shield, Sparkles, Wrench, Lightbulb, Trophy } from 'lucide-react';
 
 export default function VolunteerDashboard() {
   const navigate = useNavigate();
@@ -34,6 +34,20 @@ export default function VolunteerDashboard() {
       text: 'Track event tasks assigned by organizers.',
       button: 'View Tasks',
       path: '/dashboard/volunteer/tasks',
+    },
+    {
+      icon: Lightbulb,
+      title: 'AI Role Recommendations',
+      text: 'Get matched to the best volunteer roles for your skills.',
+      button: 'Get Matched',
+      path: '/dashboard/volunteer/recommendations',
+    },
+    {
+      icon: Trophy,
+      title: 'Leaderboard',
+      text: 'See volunteer ranks, points, and badges across events.',
+      button: 'View Leaderboard',
+      path: '/dashboard/volunteer/leaderboard',
     },
     {
       icon: Shield,

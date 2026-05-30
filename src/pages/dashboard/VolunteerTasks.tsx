@@ -27,8 +27,18 @@ export default function VolunteerTasks() {
     const updates: Partial<VolunteerTask> = { status };
     if (status === 'completed') {
       updates.completed_at = new Date().toISOString();
+      const volunteerId = task.assigned_to || task.volunteer_id || user?.id || '';
+      const existingPoints = store.getVolunteerPoints();
+      const taskPointKey = `Task completed: ${task.id}`;
+      const hourPointKey = `Volunteer hours: ${task.id}`;
+      if (volunteerId && !existingPoints.some(entry => entry.user_id === volunteerId && entry.reason === taskPointKey)) {
+        store.addVolunteerPoints(volunteerId, 50, taskPointKey, task.event_id, user?.full_name);
+      }
+      if (volunteerId && task.hours && !existingPoints.some(entry => entry.user_id === volunteerId && entry.reason === hourPointKey)) {
+        store.addVolunteerPoints(volunteerId, task.hours * 10, hourPointKey, task.event_id, user?.full_name);
+      }
       store.createPassportRecord({
-        user_id: task.assigned_to || task.volunteer_id || user?.id || '',
+        user_id: volunteerId,
         event_id: task.event_id,
         record_type: 'volunteer_task',
         title: task.title,

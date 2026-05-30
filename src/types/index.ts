@@ -189,3 +189,74 @@ export interface DashboardStats {
   totalCertificates: number;
   budgetBalance: number;
 }
+
+// --- Event Tech Track additions -------------------------------------------
+
+// 5. AI Volunteer Recommendation — saved skills + availability per volunteer.
+export interface VolunteerProfile {
+  user_id: string;
+  full_name?: string;
+  skills: string[];
+  availability: string;
+  recommended_roles?: string[];
+  updated_at: string;
+}
+
+// 6. Gamified Leaderboard — a single points award (from tasks, check-ins, etc.)
+export interface VolunteerPointsEntry {
+  id: string;
+  user_id: string;
+  full_name?: string;
+  points: number;
+  reason: string;
+  event_id?: string;
+  created_at: string;
+}
+
+// Computed leaderboard row (not persisted directly).
+export interface LeaderboardEntry {
+  user_id: string;
+  full_name: string;
+  rank: number;
+  points: number;
+  tasksCompleted: number;
+  hours: number;
+  checkInsHandled: number;
+  badges: string[];
+}
+
+// 5. A scored volunteer role recommendation.
+export interface RoleRecommendation {
+  role: string;
+  score: number;
+  fit: 'Excellent' | 'Strong' | 'Good' | 'Fair';
+  reasons: string[];
+}
+
+// 3 & 4. AI sponsor tool inputs/outputs.
+export interface SponsorProposalInput {
+  eventId: string;
+  audienceSize: number;
+  expectedReach: number;
+  sponsorBenefits: string;
+}
+
+export interface SponsorPackageTier {
+  tier: 'Gold' | 'Silver' | 'Bronze';
+  price: number;
+  benefits: string[];
+}
+
+export interface SponsorMatch {
+  category: string;
+  sponsorTypes: string[];
+  fitScore: number;
+  rationale: string;
+}
+
+export interface SponsorProposalResult {
+  proposal: string;
+  emailPitch: string;
+  packages: SponsorPackageTier[];
+  matches: SponsorMatch[];
+}

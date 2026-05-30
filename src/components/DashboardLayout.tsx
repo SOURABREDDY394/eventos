@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { LogOut, Shield } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { ensureSupabaseSession } from '@/lib/persistence';
+import store from '@/data/store';
 import type { UserRole } from '@/types';
 
 function isDashboardRole(role: string | undefined): role is UserRole {
@@ -13,6 +15,17 @@ export function DashboardLayout({ children, title }: { children: React.ReactNode
   const navigate = useNavigate();
   const { user, loading, continueAs, signOut } = useAuth();
   const [error, setError] = useState('');
+
+  // Best-effort: open a real Supabase session and hydrate the new-feature
+  // tables. Both swallow failures so the demo always works offline.
+  useEffect(() => {
+    let active = true;
+    ensureSupabaseSession().then(() => {
+      if (active) store.hydrateEtrack().catch(() => {});
+    });
+    return () => { active = false; };
+  }, []);
+
   const [dashboardSegment, routeRole] = location.pathname.split('/').slice(1, 3);
   const workspaceRole = dashboardSegment === 'dashboard' && isDashboardRole(routeRole) ? routeRole : user?.role;
 

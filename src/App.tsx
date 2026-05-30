@@ -29,6 +29,8 @@ import VolunteerDashboard from '@/pages/dashboard/VolunteerDashboard';
 import VolunteerApplications from '@/pages/dashboard/VolunteerApplications';
 import VolunteerTasks from '@/pages/dashboard/VolunteerTasks';
 import VolunteerProof from '@/pages/dashboard/VolunteerProof';
+import VolunteerRecommendations from '@/pages/dashboard/VolunteerRecommendations';
+import VolunteerLeaderboard from '@/pages/dashboard/VolunteerLeaderboard';
 import SponsorDashboard from '@/pages/dashboard/SponsorDashboard';
 import SponsorEvents from '@/pages/dashboard/SponsorEvents';
 import SponsorInterests from '@/pages/dashboard/SponsorInterests';
@@ -64,6 +66,7 @@ export default function App() {
       <Route path="/dashboard/organizer/sponsors" element={<OrganizerModuleIndex />} />
       <Route path="/dashboard/organizer/budget" element={<OrganizerModuleIndex />} />
       <Route path="/dashboard/organizer/sponsor-pitch" element={<SponsorPitch />} />
+      <Route path="/dashboard/organizer/leaderboard" element={<VolunteerLeaderboard />} />
 
       {/* Participant Dashboard */}
       <Route path="/dashboard/participant" element={<ParticipantDashboard />} />
@@ -79,6 +82,8 @@ export default function App() {
       <Route path="/dashboard/volunteer/applications" element={<VolunteerApplications />} />
       <Route path="/dashboard/volunteer/tasks" element={<VolunteerTasks />} />
       <Route path="/dashboard/volunteer/proof" element={<VolunteerProof />} />
+      <Route path="/dashboard/volunteer/recommendations" element={<VolunteerRecommendations />} />
+      <Route path="/dashboard/volunteer/leaderboard" element={<VolunteerLeaderboard />} />
 
       {/* Sponsor Dashboard */}
       <Route path="/dashboard/sponsor" element={<SponsorDashboard />} />

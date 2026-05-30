@@ -3,7 +3,7 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { EventPoster } from '@/components/EventPoster';
 import store from '@/data/store';
 import { eventStatusBadgeClass, getEventDisplayStatus, isUpcomingEvent, sortUpcomingEvents } from '@/lib/eventLifecycle';
-import { Award, Bot, Calendar, CheckCircle2, ClipboardList, Handshake, QrCode, Users, UserCheck, Wallet } from 'lucide-react';
+import { Award, Bot, Calendar, CheckCircle2, ClipboardList, Handshake, QrCode, Users, UserCheck, Wallet, Trophy } from 'lucide-react';
 
 function progressPercent(value: number, total: number) {
   if (total <= 0) return 0;
@@ -46,6 +46,7 @@ export default function OrganizerDashboard() {
     { icon: Users, title: 'Volunteers', text: `${volunteerApps.length} applications, ${approvedVolunteers.length} approved.`, path: '/dashboard/organizer/volunteers' },
     { icon: Handshake, title: 'Sponsors', text: `${sponsorLeads.length} sponsor leads across events.`, path: '/dashboard/organizer/sponsors' },
     { icon: Wallet, title: 'Budget', text: `Income Rs.${income.toLocaleString()} · Expenses Rs.${expenses.toLocaleString()}`, path: '/dashboard/organizer/budget' },
+    { icon: Trophy, title: 'Leaderboard', text: 'Volunteer ranks, points, and badges.', path: '/dashboard/organizer/leaderboard' },
   ];
 
   const eventOperations = recentEvents.map(event => {
