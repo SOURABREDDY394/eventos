@@ -54,6 +54,21 @@ const DEMO_PROFILES: Profile[] = [
   { id: 'demo-sponsor', full_name: 'Sponsor Partner', username: 'sponsor', email: '', role: 'sponsor', avatar_url: '', bio: '', passport_slug: 'sponsor', created_at: '' },
 ];
 
+const DEMO_DATA_ALIASES: Record<string, string[]> = {
+  'demo-organizer': ['u2', 'u8'],
+  'demo-participant': ['u1'],
+  'demo-volunteer': ['u3', 'u7'],
+  'demo-sponsor': ['u5'],
+};
+
+function relatedProfileIds(id: string): string[] {
+  return Array.from(new Set([id, ...(DEMO_DATA_ALIASES[id] || [])]));
+}
+
+function isRelatedProfileId(candidateId: string | undefined | null, ownerId: string) {
+  return Boolean(candidateId && relatedProfileIds(ownerId).includes(candidateId));
+}
+
 function getItem<T>(key: string, fallback: T): T {
   try {
     const data = localStorage.getItem(key);
@@ -65,22 +80,55 @@ function setItem<T>(key: string, data: T): void {
   localStorage.setItem(key, JSON.stringify(data));
 }
 
-function initStore() {
-  if (!localStorage.getItem(STORAGE_KEYS.profiles)) {
-    setItem(STORAGE_KEYS.profiles, seedProfiles);
-    setItem(STORAGE_KEYS.events, seedEvents);
-    setItem(STORAGE_KEYS.registrations, seedRegistrations);
-    setItem(STORAGE_KEYS.attendance, []);
-    setItem(STORAGE_KEYS.eventFormFields, []);
-    setItem(STORAGE_KEYS.volunteerRoles, seedVolunteerRoles);
-    setItem(STORAGE_KEYS.volunteerApplications, seedVolunteerApplications);
-    setItem(STORAGE_KEYS.volunteerTasks, seedVolunteerTasks);
-    setItem(STORAGE_KEYS.sponsorPackages, seedSponsorPackages);
-    setItem(STORAGE_KEYS.sponsorInterests, seedSponsorInterests);
-    setItem(STORAGE_KEYS.budgetItems, seedBudgetItems);
-    setItem(STORAGE_KEYS.certificates, seedCertificates);
-    setItem(STORAGE_KEYS.passportRecords, seedPassportRecords);
+function seedIfMissingOrEmpty<T>(key: string, seed: T) {
+  const existing = localStorage.getItem(key);
+  if (!existing) {
+    setItem(key, seed);
+    return;
   }
+
+  try {
+    const parsed = JSON.parse(existing);
+    if (Array.isArray(parsed) && parsed.length === 0 && Array.isArray(seed) && seed.length > 0) {
+      setItem(key, seed);
+    }
+  } catch {
+    setItem(key, seed);
+  }
+}
+
+function migrateSeedEventDates() {
+  const events = getItem<Event[]>(STORAGE_KEYS.events, []);
+  let changed = false;
+  const migrated = events.map(event => {
+    if (event.id === 'e1' && event.date === '2026-03-15') {
+      changed = true;
+      return { ...event, date: '2026-06-10' };
+    }
+    if (event.id === 'e2' && event.date === '2026-04-22') {
+      changed = true;
+      return { ...event, date: '2026-06-28' };
+    }
+    return event;
+  });
+  if (changed) setItem(STORAGE_KEYS.events, migrated);
+}
+
+function initStore() {
+  seedIfMissingOrEmpty(STORAGE_KEYS.profiles, seedProfiles);
+  seedIfMissingOrEmpty(STORAGE_KEYS.events, seedEvents);
+  seedIfMissingOrEmpty(STORAGE_KEYS.registrations, seedRegistrations);
+  seedIfMissingOrEmpty(STORAGE_KEYS.attendance, []);
+  seedIfMissingOrEmpty(STORAGE_KEYS.eventFormFields, []);
+  seedIfMissingOrEmpty(STORAGE_KEYS.volunteerRoles, seedVolunteerRoles);
+  seedIfMissingOrEmpty(STORAGE_KEYS.volunteerApplications, seedVolunteerApplications);
+  seedIfMissingOrEmpty(STORAGE_KEYS.volunteerTasks, seedVolunteerTasks);
+  seedIfMissingOrEmpty(STORAGE_KEYS.sponsorPackages, seedSponsorPackages);
+  seedIfMissingOrEmpty(STORAGE_KEYS.sponsorInterests, seedSponsorInterests);
+  seedIfMissingOrEmpty(STORAGE_KEYS.budgetItems, seedBudgetItems);
+  seedIfMissingOrEmpty(STORAGE_KEYS.certificates, seedCertificates);
+  seedIfMissingOrEmpty(STORAGE_KEYS.passportRecords, seedPassportRecords);
+  migrateSeedEventDates();
 }
 
 initStore();
@@ -220,7 +268,7 @@ export const store = {
     return store.getEvents().find(e => e.id === id);
   },
   getOrganizerEvents(organizerId: string): Event[] {
-    return store.getEvents().filter(e => e.organizer_id === organizerId);
+    return store.getEvents().filter(e => isRelatedProfileId(e.organizer_id, organizerId));
   },
   createEvent(event: Omit<Event, 'id' | 'created_at'>): Event {
     const events = store.getEvents();
@@ -267,14 +315,15 @@ export const store = {
     return regs.map(r => ({ ...r, participant: profiles.find(p => p.id === r.participant_id) }));
   },
   getParticipantRegistrations(participantId: string): Registration[] {
-    return store.getRegistrations().filter(r => r.participant_id === participantId);
+    return store.getRegistrations().filter(r => isRelatedProfileId(r.participant_id, participantId));
   },
   getRegistrationByCode(code: string): Registration | undefined {
     return store.getRegistrations().find(r => r.registration_code === code);
   },
   createRegistration(reg: Omit<Registration, 'id' | 'registered_at'>): Registration {
     const regs = store.getRegistrations();
-    const exists = regs.find(r => r.event_id === reg.event_id && r.participant_id === reg.participant_id);
+    const participantIds = relatedProfileIds(reg.participant_id);
+    const exists = regs.find(r => r.event_id === reg.event_id && participantIds.includes(r.participant_id));
     if (exists) throw new Error('Already registered for this event');
     const newReg: Registration = {
       ...reg,
@@ -402,7 +451,7 @@ export const store = {
     }));
   },
   getVolunteerApplicationsByUser(volunteerId: string): VolunteerApplication[] {
-    const apps = store.getVolunteerApplications().filter(a => a.volunteer_id === volunteerId);
+    const apps = store.getVolunteerApplications().filter(a => isRelatedProfileId(a.volunteer_id, volunteerId));
     const events = store.getEvents();
     const roles = store.getVolunteerRoles();
     return apps.map(a => ({ ...a, event: events.find(e => e.id === a.event_id), role: a.role || roles.find(r => r.id === a.role_id) }));
@@ -412,7 +461,7 @@ export const store = {
     const requestedRole = (app.role_requested || app.role?.role_name || 'General Volunteer').trim().toLowerCase();
     const duplicate = apps.find(existing =>
       existing.event_id === app.event_id
-      && existing.volunteer_id === app.volunteer_id
+      && isRelatedProfileId(existing.volunteer_id, app.volunteer_id)
       && (existing.role_requested || existing.role?.role_name || 'General Volunteer').trim().toLowerCase() === requestedRole
     );
     if (duplicate) throw new Error('You already applied for this volunteer role.');
@@ -447,7 +496,7 @@ export const store = {
     return tasks.map(t => ({ ...t, assignee: profiles.find(p => p.id === t.assigned_to) }));
   },
   getVolunteerTasksByUser(volunteerId: string): VolunteerTask[] {
-    const tasks = store.getVolunteerTasks().filter(t => t.assigned_to === volunteerId);
+    const tasks = store.getVolunteerTasks().filter(t => isRelatedProfileId(t.assigned_to || t.volunteer_id, volunteerId));
     const events = store.getEvents();
     return tasks.map(t => ({ ...t, event: events.find(e => e.id === t.event_id) }));
   },
@@ -512,7 +561,7 @@ export const store = {
     }));
   },
   getSponsorInterestsBySponsor(sponsorId: string): SponsorInterest[] {
-    const interests = store.getSponsorInterests().filter(si => si.sponsor_id === sponsorId);
+    const interests = store.getSponsorInterests().filter(si => isRelatedProfileId(si.sponsor_id, sponsorId));
     const events = store.getEvents();
     return interests.map(si => ({ ...si, event: events.find(e => e.id === si.event_id) }));
   },
@@ -558,7 +607,7 @@ export const store = {
     return certs.map(c => ({ ...c, user: profiles.find(p => p.id === c.user_id) }));
   },
   getUserCertificates(userId: string): Certificate[] {
-    const certs = store.getCertificates().filter(c => c.user_id === userId);
+    const certs = store.getCertificates().filter(c => isRelatedProfileId(c.user_id, userId));
     const events = store.getEvents();
     return certs.map(c => ({ ...c, event: events.find(e => e.id === c.event_id) }));
   },
@@ -763,7 +812,7 @@ export const store = {
     return getItem<PassportRecord[]>(STORAGE_KEYS.passportRecords, []);
   },
   getUserPassportRecords(userId: string): PassportRecord[] {
-    const records = store.getPassportRecords().filter(pr => pr.user_id === userId);
+    const records = store.getPassportRecords().filter(pr => isRelatedProfileId(pr.user_id, userId));
     const events = store.getEvents();
     return records.map(r => ({ ...r, event: events.find(e => e.id === r.event_id) }));
   },
@@ -810,9 +859,9 @@ export const store = {
     };
   },
   getParticipantStats(participantId: string) {
-    const regs = store.getRegistrations().filter(r => r.participant_id === participantId);
-    const certs = store.getCertificates().filter(c => c.user_id === participantId);
-    const records = store.getPassportRecords().filter(pr => pr.user_id === participantId);
+    const regs = store.getRegistrations().filter(r => isRelatedProfileId(r.participant_id, participantId));
+    const certs = store.getCertificates().filter(c => isRelatedProfileId(c.user_id, participantId));
+    const records = store.getPassportRecords().filter(pr => isRelatedProfileId(pr.user_id, participantId));
     return {
       registeredEvents: regs.length,
       upcomingEvents: regs.filter(r => r.status === 'pending' || r.status === 'approved').length,
@@ -821,13 +870,13 @@ export const store = {
     };
   },
   getVolunteerStats(volunteerId: string) {
-    const apps = store.getVolunteerApplications().filter(a => a.volunteer_id === volunteerId);
-    const tasks = store.getVolunteerTasks().filter(t => t.assigned_to === volunteerId);
+    const apps = store.getVolunteerApplications().filter(a => isRelatedProfileId(a.volunteer_id, volunteerId));
+    const tasks = store.getVolunteerTasks().filter(t => isRelatedProfileId(t.assigned_to || t.volunteer_id, volunteerId));
     const completed = tasks.filter(t => t.status === 'completed');
     const totalHours = completed.reduce((s, t) => s + (t.hours || 0), 0);
     const allSkills = new Set<string>();
     completed.forEach(t => (t.skills_earned || t.skills_gained || []).forEach(s => allSkills.add(s)));
-    const proofRecords = store.getPassportRecords().filter(pr => pr.user_id === volunteerId && (pr.record_type === 'volunteer_task' || pr.record_type === 'volunteer'));
+    const proofRecords = store.getPassportRecords().filter(pr => isRelatedProfileId(pr.user_id, volunteerId) && (pr.record_type === 'volunteer_task' || pr.record_type === 'volunteer'));
     return {
       applications: apps.length,
       approvedApplications: apps.filter(a => a.status === 'approved').length,
@@ -838,7 +887,7 @@ export const store = {
     };
   },
   getSponsorStats(sponsorId: string) {
-    const interests = store.getSponsorInterests().filter(si => si.sponsor_id === sponsorId);
+    const interests = store.getSponsorInterests().filter(si => isRelatedProfileId(si.sponsor_id, sponsorId));
     const events = store.getPublishedEvents();
     return {
       matchingEvents: events.length,
