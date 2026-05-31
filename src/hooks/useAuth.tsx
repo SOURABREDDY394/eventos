@@ -95,6 +95,15 @@ function upsertLocalProfile(profile: Profile) {
   }
 }
 
+function getSavedProfileByUsername(username: string): Profile | undefined {
+  try {
+    const profiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || '[]') as Profile[];
+    return profiles.find(profile => profile.username === username || profile.passport_slug === username);
+  } catch {
+    return undefined;
+  }
+}
+
 export function getDashboardRoute(role?: UserRole | null) {
   return role ? roleRoutes[role] : '/login';
 }
@@ -145,15 +154,17 @@ function readDemoUser(): DemoUser | null {
 function writeDemoUser(role: UserRole, input?: { name?: string; username?: string; email?: string; instagram_url?: string; linkedin_url?: string; github_url?: string }) {
   const existing = readDemoUser();
   const username = normalizeUsername(input?.username) || existing?.username || nameToUsername(input?.name) || 'eventosuser';
-  const name = (input?.name || existing?.name || 'EventOS User').trim();
+  const savedProfile = getSavedProfileByUsername(username);
+  const name = (input?.name || savedProfile?.full_name || existing?.name || 'EventOS User').trim();
+  const stableId = savedProfile?.id || (existing?.username === username ? existing.id : demoIdFromUsername(username));
   const demoUser: DemoUser = {
-    id: existing?.id || demoIdFromUsername(username),
+    id: stableId,
     name,
     username,
-    email: input?.email?.trim() || existing?.email || '',
-    instagram_url: input?.instagram_url?.trim() || existing?.instagram_url || '',
-    linkedin_url: input?.linkedin_url?.trim() || existing?.linkedin_url || '',
-    github_url: input?.github_url?.trim() || existing?.github_url || '',
+    email: input?.email?.trim() || savedProfile?.email || existing?.email || '',
+    instagram_url: input?.instagram_url?.trim() || savedProfile?.instagram_url || existing?.instagram_url || '',
+    linkedin_url: input?.linkedin_url?.trim() || savedProfile?.linkedin_url || existing?.linkedin_url || '',
+    github_url: input?.github_url?.trim() || savedProfile?.github_url || existing?.github_url || '',
     role,
   };
   const profile = profileFromDemoUser(demoUser);

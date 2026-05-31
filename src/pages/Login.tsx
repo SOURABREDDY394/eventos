@@ -5,10 +5,10 @@ import { ArrowRight, CheckCircle2, Github, Instagram, Linkedin, LockKeyhole, Shi
 import { getDashboardRoute, useAuth } from '@/hooks/useAuth';
 
 const productPoints = [
-  'One identity for every workspace',
-  'Saved browser session for demo use',
-  'Organizer, Participant, Volunteer, Sponsor access',
-  'Events, QR, certificates, and proof flows stay connected',
+  'Different usernames create different people',
+  'Same username restores saved event records',
+  'Each participant gets their own QR ticket after approval',
+  'Volunteer social links travel with applications',
 ];
 
 function cleanUsername(value: string) {
@@ -81,7 +81,7 @@ export default function Login() {
               Login once. Use every EventOS workspace.
             </h1>
             <p className="mt-5 max-w-xl text-sm leading-7 text-[#5E6256]">
-              This is a lightweight demo login, not full password authentication. It saves one user identity in the browser so judges can recognize who is using the app while you move across all roles.
+              This is a lightweight demo login, not full password authentication. EventOS uses your username as the saved identity, so different people get separate registrations, QR tickets, volunteer applications, sponsor interests, and proof records.
             </p>
 
             {user && (
@@ -113,7 +113,7 @@ export default function Login() {
                   placeholder="sourab"
                   className="w-full rounded-2xl border border-[#E1D8BE] bg-[#F7F6EB] px-4 py-3 text-base font-semibold text-[#14150F] placeholder:text-[#9AA08D] focus:border-[#52670F]/50 focus:outline-none"
                 />
-                <p className="mt-2 text-xs font-semibold text-[#6B705D]">Proof pages and saved demo records use: @{previewUsername || 'username'}</p>
+                <p className="mt-2 text-xs font-semibold text-[#6B705D]">Login again with @{previewUsername || 'username'} to restore that person&apos;s saved records.</p>
               </label>
 
               <label className="block">
@@ -205,7 +205,7 @@ export default function Login() {
             <div className="mt-10 rounded-[1.5rem] border border-[#D7FF62]/20 bg-[#D7FF62]/8 p-5">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-[#D7FF62]">What to tell judges</p>
               <p className="mt-3 text-sm leading-7 text-white/70">
-                This is not production auth yet. It is a demo identity layer so the product can recognize the user, save their session, and keep event operations moving during the pitch.
+                This is not production auth yet. It is a demo identity layer: username separates people, preserves their saved browser records, and makes QR/proof data belong to the right participant.
               </p>
             </div>
           </div>

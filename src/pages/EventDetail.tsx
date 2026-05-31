@@ -46,7 +46,9 @@ export default function EventDetail() {
 
   const ensureRole = (role: UserRole): Profile | null => {
     if (!user) {
-      return continueAs(role);
+      setError('Please login first so EventOS can create your own saved QR, proof, and application records.');
+      navigate('/login');
+      return null;
     }
     if (user.role === role) return user;
     return continueAs(role);
@@ -105,24 +107,7 @@ export default function EventDetail() {
       return;
     }
 
-    try {
-      const roleRequested = event.category.toLowerCase().includes('gaming') || event.category.toLowerCase().includes('esports')
-        ? 'Tournament Support'
-        : 'Event Support';
-      store.createVolunteerApplication({
-        event_id: event.id,
-        volunteer_id: volunteer.id,
-        role_requested: roleRequested,
-        skills: [],
-        availability: 'Flexible',
-        reason: `I want to support ${event.title}.`,
-        status: 'pending',
-      });
-      setActionMessage('Volunteer application submitted. Waiting for organizer approval.');
-      refreshActions(value => value + 1);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Volunteer application failed.');
-    }
+    navigate('/dashboard/volunteer/applications');
   };
 
   const handleSponsorInterest = () => {

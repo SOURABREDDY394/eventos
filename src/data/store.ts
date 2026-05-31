@@ -66,10 +66,7 @@ const DEMO_DATA_ALIASES: Record<string, string[]> = {
 };
 
 function relatedProfileIds(id: string): string[] {
-  const sharedDemoAliases = id.startsWith('demo-') && !DEMO_DATA_ALIASES[id]
-    ? ['u1', 'u2', 'u3', 'u5', 'u7', 'u8']
-    : [];
-  return Array.from(new Set([id, ...(DEMO_DATA_ALIASES[id] || []), ...sharedDemoAliases]));
+  return Array.from(new Set([id, ...(DEMO_DATA_ALIASES[id] || [])]));
 }
 
 function isRelatedProfileId(candidateId: string | undefined | null, ownerId: string) {
