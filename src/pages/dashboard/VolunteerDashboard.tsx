@@ -5,6 +5,15 @@ import store from '@/data/store';
 import { useSyncedPublishedEvents } from '@/hooks/useSyncedEvents';
 import { Award, Calendar, Clock, ClipboardList, HeartHandshake, MapPin, Shield, Sparkles, Wrench, Lightbulb, Trophy } from 'lucide-react';
 
+const defaultRequiredVolunteers = 14;
+
+function getOpenVolunteerSlots(eventId: string) {
+  const roles = store.getEventVolunteerRoles(eventId);
+  const required = roles.length > 0 ? roles.reduce((sum, role) => sum + role.required_count, 0) : defaultRequiredVolunteers;
+  const approved = store.getEventVolunteerApplications(eventId).filter(app => app.status === 'approved').length;
+  return Math.max(required - approved, 0);
+}
+
 export default function VolunteerDashboard() {
   const navigate = useNavigate();
   const user = store.getCurrentUser();
@@ -98,6 +107,7 @@ export default function VolunteerDashboard() {
               <EventPoster event={event} className="w-full sm:w-36 h-24 rounded-lg flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FFF4DE] text-[#A06D11]">{event.category}</span>
+                <span className="ml-2 text-[10px] px-2 py-0.5 rounded-full bg-[#EEF7D7] text-[#52670F]">{getOpenVolunteerSlots(event.id)} volunteer slots</span>
                 <h3 className="text-base font-black text-[#14150F] mt-1">{event.title}</h3>
                 <div className="flex flex-wrap items-center gap-3 text-[10px] text-[#5E6256] mt-2">
                   <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {event.date}</span>

@@ -85,6 +85,7 @@ export interface VolunteerApplication {
   role_requested?: string;
   skills?: string[];
   availability?: string;
+  preferred_task_place?: string;
   status: 'pending' | 'approved' | 'rejected';
   reason?: string;
   applied_at: string;

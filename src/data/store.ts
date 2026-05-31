@@ -491,6 +491,7 @@ export const store = {
       role_requested: app.role_requested || app.role?.role_name || 'General Volunteer',
       skills: app.skills || [],
       availability: app.availability || '',
+      preferred_task_place: app.preferred_task_place || '',
       reason: app.reason || '',
     }));
   },
