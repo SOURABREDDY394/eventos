@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { ArrowRight, CheckCircle2, Github, Instagram, Linkedin, LockKeyhole, Shield, UserRound } from 'lucide-react';
 import { getDashboardRoute, useAuth } from '@/hooks/useAuth';
+import type { Profile } from '@/types';
 
 const productPoints = [
   'Different usernames create different people',
@@ -13,6 +14,28 @@ const productPoints = [
 
 function cleanUsername(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 28);
+}
+
+const PROFILES_KEY = 'eventos_profiles';
+
+function readSavedProfiles(): Profile[] {
+  try {
+    return JSON.parse(localStorage.getItem(PROFILES_KEY) || '[]') as Profile[];
+  } catch {
+    return [];
+  }
+}
+
+function getSavedProfile(username: string) {
+  return readSavedProfiles().find(profile => profile.username === username || profile.passport_slug === username);
+}
+
+function saveDraftProfile(profile: Profile) {
+  const profiles = readSavedProfiles();
+  const index = profiles.findIndex(item => item.id === profile.id || item.username === profile.username);
+  if (index === -1) profiles.push(profile);
+  else profiles[index] = { ...profiles[index], ...profile };
+  localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
 }
 
 export default function Login() {
@@ -27,6 +50,36 @@ export default function Login() {
   const [error, setError] = useState('');
 
   const previewUsername = useMemo(() => cleanUsername(username || name.replace(/\s+/g, '')), [name, username]);
+
+  useEffect(() => {
+    if (!previewUsername) return;
+    const saved = getSavedProfile(previewUsername);
+    if (!saved) return;
+
+    setName(saved.full_name || '');
+    setEmail(saved.email || '');
+    setInstagramUrl(saved.instagram_url || '');
+    setLinkedinUrl(saved.linkedin_url || '');
+    setGithubUrl(saved.github_url || '');
+  }, [previewUsername]);
+
+  useEffect(() => {
+    if (!previewUsername || !name.trim()) return;
+    saveDraftProfile({
+      id: `demo-${previewUsername}`,
+      full_name: name.trim(),
+      username: previewUsername,
+      email: email.trim(),
+      role: currentRole || user?.role || 'organizer',
+      avatar_url: '',
+      bio: '',
+      instagram_url: instagramUrl.trim(),
+      linkedin_url: linkedinUrl.trim(),
+      github_url: githubUrl.trim(),
+      passport_slug: previewUsername,
+      created_at: '',
+    });
+  }, [currentRole, email, githubUrl, instagramUrl, linkedinUrl, name, previewUsername, user?.role]);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -174,37 +227,37 @@ export default function Login() {
           </div>
         </section>
 
-        <section className="relative overflow-hidden rounded-[2.4rem] border border-[#202711]/20 bg-[#091007] p-6 text-white shadow-[0_32px_90px_rgba(18,25,10,0.22)] sm:p-10">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_12%,rgba(215,255,98,0.18),transparent_22rem),radial-gradient(circle_at_82%_80%,rgba(244,196,103,0.15),transparent_24rem)]" />
-          <div className="absolute inset-0 opacity-[0.12] [background-image:linear-gradient(rgba(215,255,98,0.25)_1px,transparent_1px),linear-gradient(90deg,rgba(215,255,98,0.25)_1px,transparent_1px)] [background-size:36px_36px]" />
+        <section className="relative overflow-hidden rounded-[2.4rem] border border-[#2f3b17] bg-[#0a1106] p-6 text-[#fffdf4] shadow-[0_32px_90px_rgba(18,25,10,0.22)] sm:p-10">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_12%,rgba(215,255,98,0.16),transparent_22rem),radial-gradient(circle_at_82%_80%,rgba(244,196,103,0.12),transparent_24rem)]" />
+          <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(215,255,98,0.35)_1px,transparent_1px),linear-gradient(90deg,rgba(215,255,98,0.35)_1px,transparent_1px)] [background-size:36px_36px]" />
           <div className="relative">
             <div className="mb-10 flex items-center justify-between">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/7 px-4 py-2">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#e7f7b6]/35 bg-[#e7f7b6]/10 px-4 py-2">
                 <LockKeyhole className="h-4 w-4 text-[#D7FF62]" />
                 <span className="text-xs font-black uppercase tracking-[0.2em] text-[#D7FF62]">One identity</span>
               </div>
               <span className="rounded-full bg-[#D7FF62] px-4 py-2 text-xs font-black text-[#14150F]">Demo MVP</span>
             </div>
 
-            <h2 className="max-w-2xl text-5xl font-black leading-[0.96] tracking-[-0.03em] sm:text-6xl">
+            <h2 className="max-w-2xl text-5xl font-black leading-[0.96] tracking-[-0.03em] text-[#fffdf4] sm:text-6xl">
               Your name follows the full event lifecycle.
             </h2>
-            <p className="mt-5 max-w-xl text-sm leading-7 text-white/62">
+            <p className="mt-5 max-w-xl text-sm leading-7 text-[#d9dfc8]">
               Login creates a reusable demo profile. After that, Dashboard Options lets the same person act as organizer, participant, volunteer, or sponsor for judging the flow.
             </p>
 
             <div className="mt-9 grid gap-3">
               {productPoints.map(point => (
-                <div key={point} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-4">
+                <div key={point} className="flex items-center gap-3 rounded-2xl border border-[#e7f7b6]/25 bg-[#f9ffe3]/8 px-4 py-4">
                   <CheckCircle2 className="h-5 w-5 shrink-0 text-[#D7FF62]" />
-                  <span className="text-sm font-bold text-white">{point}</span>
+                  <span className="text-sm font-bold text-[#fffdf4]">{point}</span>
                 </div>
               ))}
             </div>
 
-            <div className="mt-10 rounded-[1.5rem] border border-[#D7FF62]/20 bg-[#D7FF62]/8 p-5">
+            <div className="mt-10 rounded-[1.5rem] border border-[#D7FF62]/25 bg-[#D7FF62]/10 p-5">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-[#D7FF62]">What to tell judges</p>
-              <p className="mt-3 text-sm leading-7 text-white/70">
+              <p className="mt-3 text-sm leading-7 text-[#e5ecd3]">
                 This is not production auth yet. It is a demo identity layer: username separates people, preserves their saved browser records, and makes QR/proof data belong to the right participant.
               </p>
             </div>
