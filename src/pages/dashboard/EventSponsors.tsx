@@ -78,11 +78,11 @@ export default function EventSponsors() {
                     <div className="w-8 h-8 rounded-full bg-rose-500/10 flex items-center justify-center"><Handshake className="w-4 h-4 text-rose-400" /></div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-white truncate">{si.company_name || 'Unknown'}</p>
-                      <p className="text-[10px] text-white/30">{si.sponsor?.full_name} &bull; {si.package?.title}</p>
+                      <p className="text-[10px] text-white/30">{si.sponsor?.full_name} &bull; {si.sponsorship_type || si.package?.title || 'General Sponsorship'}</p>
                     </div>
                     <span className={`text-[10px] px-2 py-0.5 rounded-full ${si.status === 'confirmed' ? 'bg-emerald-500/20 text-emerald-400' : si.status === 'rejected' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'}`}>{si.status}</span>
                   </div>
-                  <p className="text-[10px] text-white/20 mt-1">{si.message}</p>
+                  <p className="text-[10px] text-white/20 mt-1">{si.contribution_details || si.message}</p>
                   {si.status === 'new' && (
                     <div className="flex gap-2 mt-2">
                       <button onClick={() => updateStatus(si.id, 'contacted')} className="text-[10px] px-2 py-1 rounded bg-blue-500/20 text-blue-400">Mark Contacted</button>

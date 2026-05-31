@@ -129,6 +129,8 @@ export interface SponsorInterest {
   package?: SponsorPackage;
   event?: Event;
   company_name?: string;
+  sponsorship_type?: string;
+  contribution_details?: string;
   message?: string;
   status: 'new' | 'contacted' | 'confirmed' | 'rejected';
   created_at: string;
