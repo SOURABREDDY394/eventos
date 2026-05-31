@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router';
+import { AlertCircle, Camera, CameraOff, CheckCircle, QrCode, Search, UserCheck } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import store from '@/data/store';
 import { isPastEvent } from '@/lib/eventLifecycle';
-import { QrCode, CheckCircle, AlertCircle, Camera, CameraOff, Search, UserCheck } from 'lucide-react';
 import type { Registration } from '@/types';
 
-// BarcodeDetector is available in Chromium browsers; typed loosely here.
 type BarcodeDetectorLike = {
   detect: (source: CanvasImageSource) => Promise<{ rawValue: string }[]>;
 };
+
 declare global {
   interface Window {
     BarcodeDetector?: new (opts?: { formats: string[] }) => BarcodeDetectorLike;
@@ -44,10 +44,15 @@ export default function EventAttendance() {
     setScanning(false);
   };
 
-  // Clean up the camera when leaving the page.
   useEffect(() => () => stopScan(), []);
 
-  if (!event) return <DashboardLayout title="Check-In"><p className="text-white/40">Event not found</p></DashboardLayout>;
+  if (!event) {
+    return (
+      <DashboardLayout title="Check-In">
+        <p className="text-[#5E6256]">Event not found</p>
+      </DashboardLayout>
+    );
+  }
 
   const attended = registrations.filter(r => r.status === 'attended');
   const approved = registrations.filter(r => r.status === 'approved');
@@ -71,16 +76,40 @@ export default function EventAttendance() {
 
   const verifyCode = (raw: string): boolean => {
     setMessage(null);
-    if (attendanceClosed) { setMessage({ text: 'Check-in is closed for this event.', type: 'error' }); return false; }
+    if (attendanceClosed) {
+      setMessage({ text: 'Check-in is closed for this event.', type: 'error' });
+      return false;
+    }
+
     const value = raw.trim().toUpperCase();
     if (!value) return false;
+
     const reg = store.getRegistrationByCode(value);
-    if (!reg) { setMessage({ text: 'Invalid registration code', type: 'error' }); return false; }
-    if (reg.event_id !== event.id) { setMessage({ text: 'Code belongs to a different event', type: 'error' }); return false; }
-    if (reg.status === 'pending') { setMessage({ text: 'This registration is still pending approval.', type: 'error' }); return false; }
-    if (reg.status === 'rejected') { setMessage({ text: 'This registration was rejected.', type: 'error' }); return false; }
-    if (reg.status === 'attended') { setMessage({ text: 'Already checked in', type: 'error' }); return false; }
-    if (reg.status !== 'approved') { setMessage({ text: 'Only approved registrations can be checked in.', type: 'error' }); return false; }
+    if (!reg) {
+      setMessage({ text: 'Invalid registration code', type: 'error' });
+      return false;
+    }
+    if (reg.event_id !== event.id) {
+      setMessage({ text: 'Code belongs to a different event', type: 'error' });
+      return false;
+    }
+    if (reg.status === 'pending') {
+      setMessage({ text: 'This registration is still pending approval.', type: 'error' });
+      return false;
+    }
+    if (reg.status === 'rejected') {
+      setMessage({ text: 'This registration was rejected.', type: 'error' });
+      return false;
+    }
+    if (reg.status === 'attended') {
+      setMessage({ text: 'Already checked in', type: 'error' });
+      return false;
+    }
+    if (reg.status !== 'approved') {
+      setMessage({ text: 'Only approved registrations can be checked in.', type: 'error' });
+      return false;
+    }
+
     doCheckIn(store.getEventRegistrations(event.id).find(r => r.id === reg.id) || reg, 'manual');
     return true;
   };
@@ -91,13 +120,16 @@ export default function EventAttendance() {
       setScanError('Live QR scanning is not supported in this browser. Use manual code entry below.');
       return;
     }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       streamRef.current = stream;
       setScanning(true);
-      const video = videoRef.current!;
+      const video = videoRef.current;
+      if (!video) throw new Error('Camera preview is not ready.');
       video.srcObject = stream;
       await video.play();
+
       const detector = new window.BarcodeDetector({ formats: ['qr_code'] });
       const tick = async () => {
         if (!streamRef.current) return;
@@ -105,9 +137,14 @@ export default function EventAttendance() {
           const codes = await detector.detect(video);
           if (codes.length) {
             const ok = verifyCode(codes[0].rawValue);
-            if (ok) { stopScan(); return; }
+            if (ok) {
+              stopScan();
+              return;
+            }
           }
-        } catch { /* keep scanning */ }
+        } catch {
+          // Keep scanning while the camera stream is active.
+        }
         rafRef.current = requestAnimationFrame(tick);
       };
       rafRef.current = requestAnimationFrame(tick);
@@ -125,137 +162,182 @@ export default function EventAttendance() {
 
   return (
     <DashboardLayout title="Event Check-In">
-      <div className="grid lg:grid-cols-2 gap-6 lg:gap-8">
-        <div className="space-y-6">
-          {/* Scanner + manual entry */}
-          <div className="glass-card rounded-xl p-4 sm:p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <QrCode className="w-6 h-6 text-[#E49B3A]" />
-              <h2 className="text-base font-semibold text-white">Scan QR or Enter Code</h2>
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.25fr)_minmax(22rem,0.75fr)]">
+        <section className="relative overflow-hidden rounded-[2rem] border border-[#E1D8BE] bg-[#FFFCF3] p-4 shadow-[0_24px_70px_rgba(82,103,15,0.10)] sm:p-6">
+          <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[#EEF5DC] to-transparent" />
+          <div className="relative mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#DCE8BE] bg-[#EEF5D9] text-[#52670F] shadow-sm">
+                <QrCode className="h-6 w-6" />
+              </span>
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.22em] text-[#52670F]">Live entry desk</p>
+                <h2 className="text-xl font-black leading-tight text-[#14150F]">Scan QR or enter code</h2>
+              </div>
             </div>
+            <div className="grid grid-cols-3 gap-2 sm:w-[24rem]">
+              {[
+                ['Total', registrations.length],
+                ['Inside', attended.length],
+                ['Waiting', approved.length],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-2xl border border-[#E7E1D2] bg-white/78 px-3 py-2 text-center shadow-sm">
+                  <p className="text-xl font-black text-[#14150F]">{value}</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#7B845D]">{label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
 
-            <div className="rounded-lg overflow-hidden bg-black/40 border border-white/10 mb-3 aspect-video flex items-center justify-center relative">
-              <video ref={videoRef} className={`w-full h-full object-cover ${scanning ? '' : 'hidden'}`} muted playsInline />
+          <div className="relative overflow-hidden rounded-[1.5rem] border border-[#D8E5B8] bg-[radial-gradient(circle_at_50%_20%,rgba(220,233,183,0.95),transparent_20rem),linear-gradient(135deg,#F8F7EE,#ECEFDA)] p-3 shadow-inner">
+            <div className="absolute left-5 top-5 h-8 w-8 rounded-tl-2xl border-l-4 border-t-4 border-[#52670F]/55" />
+            <div className="absolute right-5 top-5 h-8 w-8 rounded-tr-2xl border-r-4 border-t-4 border-[#52670F]/55" />
+            <div className="absolute bottom-5 left-5 h-8 w-8 rounded-bl-2xl border-b-4 border-l-4 border-[#52670F]/55" />
+            <div className="absolute bottom-5 right-5 h-8 w-8 rounded-br-2xl border-b-4 border-r-4 border-[#52670F]/55" />
+            <div className="relative flex aspect-[16/9] min-h-[16rem] items-center justify-center overflow-hidden rounded-[1.15rem] border border-white/75 bg-[#DFE4D1]">
+              <video ref={videoRef} className={`h-full w-full object-cover ${scanning ? '' : 'hidden'}`} muted playsInline />
               {!scanning && (
-                <div className="text-center px-4 py-8">
-                  <Camera className="w-10 h-10 text-white/20 mx-auto mb-2" />
-                  <p className="text-xs text-white/40">Camera preview appears here while scanning.</p>
+                <div className="max-w-sm px-5 text-center">
+                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl border border-[#D8E5B8] bg-[#FFFCF3] shadow-[0_18px_36px_rgba(82,103,15,0.12)]">
+                    <Camera className="h-8 w-8 text-[#52670F]" />
+                  </div>
+                  <p className="text-sm font-black text-[#45493E]">Ready for QR verification</p>
+                  <p className="mt-1 text-xs leading-5 text-[#6B705D]">Start scanning when the attendee reaches the desk, or use the manual code below.</p>
                 </div>
               )}
-              {scanning && <span className="absolute top-2 right-2 text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-200">Scanning…</span>}
-            </div>
-
-            <div className="flex gap-2 mb-3">
-              {!scanning ? (
-                <button onClick={startScan} disabled={attendanceClosed} className="gold-btn flex-1 flex items-center justify-center gap-2 disabled:opacity-50">
-                  <Camera className="w-4 h-4" /> Start QR Scan
-                </button>
-              ) : (
-                <button onClick={stopScan} className="ghost-btn rounded-full flex-1 flex items-center justify-center gap-2">
-                  <CameraOff className="w-4 h-4" /> Stop Scan
-                </button>
+              {scanning && (
+                <>
+                  <span className="absolute right-4 top-4 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700 shadow-sm">Scanning</span>
+                  <span className="absolute inset-x-8 top-1/2 h-px bg-gradient-to-r from-transparent via-[#D7FF62] to-transparent shadow-[0_0_22px_rgba(215,255,98,0.9)]" />
+                </>
               )}
             </div>
-            {scanError && <p className="text-xs text-amber-400 mb-3">{scanError}</p>}
+          </div>
 
-            <div className="flex flex-col sm:flex-row gap-2">
-              <input
-                value={code} onChange={e => setCode(e.target.value.toUpperCase())}
-                onKeyDown={e => { if (e.key === 'Enter') verifyCode(code); }}
-                disabled={attendanceClosed}
-                className="flex-1 bg-white/5 border border-white/10 rounded-lg py-3 px-4 text-base text-white mono-text placeholder:text-white/20 focus:outline-none focus:border-[#E49B3A]/50"
-                placeholder="EVOS-XXXXXX" />
-              <button onClick={() => verifyCode(code)} disabled={attendanceClosed} className="gold-btn disabled:opacity-50 whitespace-nowrap">Verify & Check In</button>
+          <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_auto] lg:items-end">
+            <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_13rem]">
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-black uppercase tracking-[0.16em] text-[#7B845D]">Manual registration code</span>
+                <input
+                  value={code}
+                  onChange={e => setCode(e.target.value.toUpperCase())}
+                  onKeyDown={e => { if (e.key === 'Enter') verifyCode(code); }}
+                  disabled={attendanceClosed}
+                  className="mono-text w-full rounded-2xl border border-[#E1D8BE] bg-[#F7F6EB] px-4 py-3 text-base font-black tracking-[0.08em] text-[#14150F] placeholder:text-[#9AA08D] focus:border-[#52670F]/50 focus:outline-none"
+                  placeholder="EVOS-XXXXXX"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-black uppercase tracking-[0.16em] text-[#7B845D]">Handled by</span>
+                <select
+                  value={handledBy}
+                  onChange={e => setHandledBy(e.target.value)}
+                  className="w-full rounded-2xl border border-[#E1D8BE] bg-[#F7F6EB] px-4 py-3 text-sm font-semibold text-[#14150F] focus:border-[#52670F]/50 focus:outline-none"
+                >
+                  <option value="organizer">Organizer (me)</option>
+                  {approvedVolunteers.map(v => (
+                    <option key={v.id} value={v.volunteer_id}>
+                      {v.volunteer?.full_name || 'Volunteer'} - earns 15 pts
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
 
-            <div className="mt-3">
-              <label className="text-[11px] text-white/40 mb-1 block">Check-in handled by</label>
-              <select value={handledBy} onChange={e => setHandledBy(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-[#E49B3A]/50">
-                <option value="organizer" className="bg-[#1a1a1a]">Organizer (me)</option>
-                {approvedVolunteers.map(v => (
-                  <option key={v.id} value={v.volunteer_id} className="bg-[#1a1a1a]">
-                    {v.volunteer?.full_name || 'Volunteer'} — earns {15} pts / check-in
-                  </option>
-                ))}
-              </select>
+            <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
+              {!scanning ? (
+                <button onClick={startScan} disabled={attendanceClosed} className="gold-btn flex items-center justify-center gap-2 disabled:opacity-50">
+                  <Camera className="h-4 w-4" /> Start QR Scan
+                </button>
+              ) : (
+                <button onClick={stopScan} className="ghost-btn flex items-center justify-center gap-2 rounded-full">
+                  <CameraOff className="h-4 w-4" /> Stop Scan
+                </button>
+              )}
+              <button onClick={() => verifyCode(code)} disabled={attendanceClosed} className="gold-btn flex items-center justify-center gap-2 disabled:opacity-50">
+                <UserCheck className="h-4 w-4" /> Verify & Check In
+              </button>
             </div>
+          </div>
 
-            {attendanceClosed && <p className="text-xs text-white/35 mt-3">Check-in is closed for this event.</p>}
-            {message && (
-              <div className={`mt-3 p-3 rounded-lg flex items-center gap-2 ${message.type === 'success' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
-                {message.type === 'success' ? <CheckCircle className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
-                <span className="text-sm">{message.text}</span>
+          {scanError && <p className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-700">{scanError}</p>}
+          {attendanceClosed && <p className="mt-3 rounded-2xl border border-[#E7E1D2] bg-[#F7F6EB] px-4 py-3 text-xs font-semibold text-[#6B705D]">Check-in is closed for this event.</p>}
+          {message && (
+            <div className={`mt-3 flex items-center gap-2 rounded-2xl border px-4 py-3 ${message.type === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-red-200 bg-red-50 text-red-600'}`}>
+              {message.type === 'success' ? <CheckCircle className="h-4 w-4 shrink-0" /> : <AlertCircle className="h-4 w-4 shrink-0" />}
+              <span className="text-sm font-semibold">{message.text}</span>
+            </div>
+          )}
+        </section>
+
+        <aside className="space-y-5">
+          <section className="rounded-[2rem] border border-[#E1D8BE] bg-[#FFFCF3] p-4 shadow-[0_20px_55px_rgba(82,103,15,0.08)] sm:p-5">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-[#52670F]">Approval queue</p>
+                <h3 className="text-lg font-black text-[#14150F]">Tap to check in ({approved.length})</h3>
               </div>
-            )}
-          </div>
-
-          <div className="grid grid-cols-3 gap-3">
-            <div className="glass-card rounded-lg p-4 text-center">
-              <p className="text-xl font-bold text-white">{registrations.length}</p>
-              <p className="text-[10px] text-white/30">Total</p>
+              <span className="rounded-full border border-[#DCE8BE] bg-[#EEF5D9] px-3 py-1 text-xs font-black text-[#52670F]">{filteredApproved.length} shown</span>
             </div>
-            <div className="glass-card rounded-lg p-4 text-center">
-              <p className="text-xl font-bold text-emerald-400">{attended.length}</p>
-              <p className="text-[10px] text-white/30">Checked In</p>
-            </div>
-            <div className="glass-card rounded-lg p-4 text-center">
-              <p className="text-xl font-bold text-blue-400">{approved.length}</p>
-              <p className="text-[10px] text-white/30">Awaiting</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Approved list with one-tap check-in + checked-in list */}
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-sm font-semibold text-white mb-3">Approved — Tap to Check In ({approved.length})</h3>
             <div className="relative mb-3">
-              <Search className="w-4 h-4 text-white/30 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search name or code"
-                className="w-full bg-white/5 border border-white/10 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#E49B3A]/50" />
+              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#7B845D]" />
+              <input
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                placeholder="Search name or code"
+                className="w-full rounded-2xl border border-[#E1D8BE] bg-[#F7F6EB] py-3 pl-11 pr-3 text-sm font-semibold text-[#14150F] placeholder:text-[#8B907F] focus:border-[#52670F]/50 focus:outline-none"
+              />
             </div>
-            <div className="space-y-2 max-h-72 overflow-y-auto">
+            <div className="max-h-[24rem] space-y-2 overflow-y-auto pr-1">
               {approved.length === 0 ? (
-                <p className="text-sm text-white/30 text-center py-8">No approved participants awaiting check-in.</p>
+                <p className="rounded-2xl border border-dashed border-[#D9D0B8] bg-[#F7F6EB] px-4 py-8 text-center text-sm font-semibold text-[#6B705D]">No approved participants awaiting check-in.</p>
               ) : filteredApproved.length === 0 ? (
-                <p className="text-sm text-white/30 text-center py-8">No matches for “{query}”.</p>
+                <p className="rounded-2xl border border-dashed border-[#D9D0B8] bg-[#F7F6EB] px-4 py-8 text-center text-sm font-semibold text-[#6B705D]">No matches for "{query}".</p>
               ) : filteredApproved.map((reg) => (
-                <div key={reg.id} className="glass-card rounded-lg p-3 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-xs font-medium text-blue-400">
+                <div key={reg.id} className="group flex items-center gap-3 rounded-2xl border border-[#E7E1D2] bg-white/82 p-3 shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#CFE2A1] hover:shadow-[0_16px_36px_rgba(82,103,15,0.12)]">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EEF5D9] text-sm font-black text-[#52670F]">
                     {reg.participant?.full_name?.[0] || '?'}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-white truncate">{reg.participant?.full_name || 'Unknown'}</p>
-                    <p className="text-[10px] mono-text text-white/30">{reg.registration_code}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-black text-[#14150F]">{reg.participant?.full_name || 'Unknown'}</p>
+                    <p className="mono-text truncate text-[10px] font-bold text-[#7B845D]">{reg.registration_code}</p>
                   </div>
-                  <button onClick={() => doCheckIn(reg, 'manual')} disabled={attendanceClosed}
-                    className="text-[11px] px-3 py-1.5 rounded bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors flex items-center gap-1 disabled:opacity-40">
-                    <UserCheck className="w-3.5 h-3.5" /> Check In
+                  <button
+                    onClick={() => doCheckIn(reg, 'manual')}
+                    disabled={attendanceClosed}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#52670F] px-3 py-2 text-[11px] font-black text-white transition-colors hover:bg-[#41520B] disabled:opacity-40"
+                  >
+                    <UserCheck className="h-3.5 w-3.5" /> Check In
                   </button>
                 </div>
               ))}
             </div>
-          </div>
+          </section>
 
-          <div>
-            <h3 className="text-sm font-semibold text-white mb-3">Checked-in Attendees ({attended.length})</h3>
-            <div className="space-y-2 max-h-72 overflow-y-auto">
-              {attended.length === 0 && <p className="text-sm text-white/30 text-center py-8">No check-ins yet</p>}
+          <section className="rounded-[2rem] border border-[#E1D8BE] bg-[#FFFCF3] p-4 shadow-[0_20px_55px_rgba(82,103,15,0.08)] sm:p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-[#52670F]">Inside venue</p>
+                <h3 className="text-lg font-black text-[#14150F]">Checked-in attendees ({attended.length})</h3>
+              </div>
+              <CheckCircle className="h-5 w-5 text-emerald-600" />
+            </div>
+            <div className="max-h-[18rem] space-y-2 overflow-y-auto pr-1">
+              {attended.length === 0 && <p className="rounded-2xl border border-dashed border-[#D9D0B8] bg-[#F7F6EB] px-4 py-8 text-center text-sm font-semibold text-[#6B705D]">No check-ins yet.</p>}
               {attended.map((reg) => (
-                <div key={reg.id} className="glass-card rounded-lg p-3 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                    <CheckCircle className="w-4 h-4 text-emerald-400" />
+                <div key={reg.id} className="flex items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-emerald-700">
+                    <CheckCircle className="h-4 w-4" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-white truncate">{reg.participant?.full_name || 'Unknown'}</p>
-                    <p className="text-[10px] mono-text text-white/30">{reg.registration_code}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-black text-[#14150F]">{reg.participant?.full_name || 'Unknown'}</p>
+                    <p className="mono-text truncate text-[10px] font-bold text-emerald-700">{reg.registration_code}</p>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-        </div>
+          </section>
+        </aside>
       </div>
     </DashboardLayout>
   );
