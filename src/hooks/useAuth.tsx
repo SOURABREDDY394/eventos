@@ -5,6 +5,7 @@ export type DemoUser = {
   id: string;
   name: string;
   username: string;
+  email?: string;
   role: UserRole;
 };
 
@@ -13,7 +14,7 @@ type AuthContextValue = {
   demoUser: DemoUser | null;
   currentRole: UserRole | null;
   loading: boolean;
-  loginDemo: () => Profile;
+  loginDemo: (input?: { name?: string; username?: string; email?: string }) => Profile;
   continueAs: (role: UserRole) => Profile;
   signOut: () => Promise<void>;
 };
@@ -21,6 +22,7 @@ type AuthContextValue = {
 const CURRENT_ROLE_KEY = 'currentRole';
 const CURRENT_USER_KEY = 'currentUser';
 const OLD_AUTH_USER_KEY = 'eventos_current_user';
+const PROFILES_KEY = 'eventos_profiles';
 
 export const demoUsers: Record<UserRole, DemoUser> = {
   organizer: {
@@ -62,6 +64,34 @@ function isUserRole(role: string | null): role is UserRole {
   return role === 'organizer' || role === 'participant' || role === 'volunteer' || role === 'sponsor';
 }
 
+function normalizeUsername(value?: string) {
+  return (value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, '')
+    .slice(0, 28);
+}
+
+function nameToUsername(name?: string) {
+  return normalizeUsername(name?.replace(/\s+/g, '') || 'eventosuser');
+}
+
+function demoIdFromUsername(username: string) {
+  return `demo-${username || 'eventosuser'}`;
+}
+
+function upsertLocalProfile(profile: Profile) {
+  try {
+    const profiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || '[]') as Profile[];
+    const index = profiles.findIndex(item => item.id === profile.id || item.username === profile.username);
+    if (index === -1) profiles.push(profile);
+    else profiles[index] = { ...profiles[index], ...profile };
+    localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+  } catch {
+    localStorage.setItem(PROFILES_KEY, JSON.stringify([profile]));
+  }
+}
+
 export function getDashboardRoute(role?: UserRole | null) {
   return role ? roleRoutes[role] : '/login';
 }
@@ -71,7 +101,7 @@ export function profileFromDemoUser(demoUser: DemoUser): Profile {
     id: demoUser.id,
     full_name: demoUser.name,
     username: demoUser.username,
-    email: '',
+    email: demoUser.email || '',
     role: demoUser.role,
     avatar_url: '',
     bio: '',
@@ -87,8 +117,14 @@ function readDemoUser(): DemoUser | null {
     if (!storedUser || !isUserRole(storedRole)) return null;
 
     const parsed = JSON.parse(storedUser) as Partial<DemoUser>;
-    if (parsed.id && parsed.username && parsed.role === storedRole && isUserRole(parsed.role)) {
-      return parsed as DemoUser;
+    if (parsed.id && parsed.username && isUserRole(storedRole)) {
+      return {
+        id: parsed.id,
+        name: parsed.name || parsed.username,
+        username: parsed.username,
+        email: parsed.email || '',
+        role: storedRole,
+      };
     }
 
     return demoUsers[storedRole];
@@ -97,11 +133,22 @@ function readDemoUser(): DemoUser | null {
   }
 }
 
-function writeDemoUser(role: UserRole) {
-  const demoUser = demoUsers[role];
+function writeDemoUser(role: UserRole, input?: { name?: string; username?: string; email?: string }) {
+  const existing = readDemoUser();
+  const username = normalizeUsername(input?.username) || existing?.username || nameToUsername(input?.name) || 'eventosuser';
+  const name = (input?.name || existing?.name || 'EventOS User').trim();
+  const demoUser: DemoUser = {
+    id: existing?.id || demoIdFromUsername(username),
+    name,
+    username,
+    email: input?.email?.trim() || existing?.email || '',
+    role,
+  };
+  const profile = profileFromDemoUser(demoUser);
   localStorage.setItem(CURRENT_ROLE_KEY, role);
   localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(demoUser));
   localStorage.removeItem(OLD_AUTH_USER_KEY);
+  upsertLocalProfile(profile);
   return demoUser;
 }
 
@@ -127,8 +174,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return profileFromDemoUser(nextDemoUser);
   }, []);
 
-  const loginDemo = useCallback(() => {
-    const nextDemoUser = writeDemoUser('organizer');
+  const loginDemo = useCallback((input?: { name?: string; username?: string; email?: string }) => {
+    const nextDemoUser = writeDemoUser('organizer', input);
     setDemoUser(nextDemoUser);
     return profileFromDemoUser(nextDemoUser);
   }, []);

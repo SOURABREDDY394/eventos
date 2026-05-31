@@ -32,11 +32,7 @@ export function DashboardLayout({ children, title }: { children: React.ReactNode
   useEffect(() => {
     if (loading) return;
     if (!user) {
-      if (dashboardSegment === 'dashboard' && isDashboardRole(routeRole)) {
-        continueAs(routeRole);
-        return;
-      }
-      navigate('/', { replace: true });
+      navigate('/login', { replace: true });
       return;
     }
 
