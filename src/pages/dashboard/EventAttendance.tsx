@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router';
+import jsQR from 'jsqr';
 import { AlertCircle, Camera, CameraOff, CheckCircle, QrCode, Search, UserCheck } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import store from '@/data/store';
@@ -27,6 +28,7 @@ export default function EventAttendance() {
   const [scanning, setScanning] = useState(false);
   const [scanError, setScanError] = useState('');
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number | null>(null);
 
@@ -74,7 +76,7 @@ export default function EventAttendance() {
     setVersion(v => v + 1);
   };
 
-  const verifyCode = (raw: string): boolean => {
+  const verifyCode = (raw: string, method: 'manual' | 'qr' = 'manual'): boolean => {
     setMessage(null);
     if (attendanceClosed) {
       setMessage({ text: 'Check-in is closed for this event.', type: 'error' });
@@ -110,16 +112,12 @@ export default function EventAttendance() {
       return false;
     }
 
-    doCheckIn(store.getEventRegistrations(event.id).find(r => r.id === reg.id) || reg, 'manual');
+    doCheckIn(store.getEventRegistrations(event.id).find(r => r.id === reg.id) || reg, method);
     return true;
   };
 
   const startScan = async () => {
     setScanError('');
-    if (!window.BarcodeDetector) {
-      setScanError('Live QR scanning is not supported in this browser. Use manual code entry below.');
-      return;
-    }
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
@@ -130,13 +128,32 @@ export default function EventAttendance() {
       video.srcObject = stream;
       await video.play();
 
-      const detector = new window.BarcodeDetector({ formats: ['qr_code'] });
+      const detector = window.BarcodeDetector ? new window.BarcodeDetector({ formats: ['qr_code'] }) : null;
+      const canvas = canvasRef.current || document.createElement('canvas');
+      canvasRef.current = canvas;
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+
       const tick = async () => {
         if (!streamRef.current) return;
         try {
-          const codes = await detector.detect(video);
-          if (codes.length) {
-            const ok = verifyCode(codes[0].rawValue);
+          let scannedValue = '';
+
+          if (detector) {
+            const codes = await detector.detect(video);
+            scannedValue = codes[0]?.rawValue || '';
+          }
+
+          if (!scannedValue && context && video.videoWidth && video.videoHeight) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            scannedValue = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' })?.data || '';
+          }
+
+          if (scannedValue) {
+            setCode(scannedValue.trim().toUpperCase());
+            const ok = verifyCode(scannedValue, 'qr');
             if (ok) {
               stopScan();
               return;
