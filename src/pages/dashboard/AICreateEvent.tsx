@@ -565,60 +565,60 @@ export default function AICreateEvent() {
 
               <div className="grid sm:grid-cols-3 gap-4">
                 <label className="block">
-                  <span className="text-xs text-white/45 mb-1.5 block">Date</span>
+                  <span className="text-xs text-[#5E6256] mb-1.5 block">Date</span>
                   <input type="date" value={draft.date} onChange={event => updateDraft('date', event.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg py-2.5 px-3 text-sm text-white focus:outline-none focus:border-[#E49B3A]/50" />
+                    className="w-full bg-[#F7F6EB] border border-[#E7E1D2] rounded-xl py-2.5 px-3 text-sm text-[#14150F] focus:outline-none focus:border-[#52670F]/50" />
                 </label>
                 <label className="block">
-                  <span className="text-xs text-white/45 mb-1.5 block">Start</span>
+                  <span className="text-xs text-[#5E6256] mb-1.5 block">Start</span>
                   <input type="time" value={draft.start_time} onChange={event => updateDraft('start_time', event.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg py-2.5 px-3 text-sm text-white focus:outline-none focus:border-[#E49B3A]/50" />
+                    className="w-full bg-[#F7F6EB] border border-[#E7E1D2] rounded-xl py-2.5 px-3 text-sm text-[#14150F] focus:outline-none focus:border-[#52670F]/50" />
                 </label>
                 <label className="block">
-                  <span className="text-xs text-white/45 mb-1.5 block">End</span>
+                  <span className="text-xs text-[#5E6256] mb-1.5 block">End</span>
                   <input type="time" value={draft.end_time} onChange={event => updateDraft('end_time', event.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg py-2.5 px-3 text-sm text-white focus:outline-none focus:border-[#E49B3A]/50" />
+                    className="w-full bg-[#F7F6EB] border border-[#E7E1D2] rounded-xl py-2.5 px-3 text-sm text-[#14150F] focus:outline-none focus:border-[#52670F]/50" />
                 </label>
               </div>
 
               <div className="grid sm:grid-cols-3 gap-4">
                 <label className="block sm:col-span-1">
-                  <span className="text-xs text-white/45 mb-1.5 block">Venue</span>
+                  <span className="text-xs text-[#5E6256] mb-1.5 block">Venue</span>
                   <input value={draft.venue} onChange={event => updateDraft('venue', event.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg py-2.5 px-3 text-sm text-white focus:outline-none focus:border-[#E49B3A]/50" />
+                    className="w-full bg-[#F7F6EB] border border-[#E7E1D2] rounded-xl py-2.5 px-3 text-sm text-[#14150F] focus:outline-none focus:border-[#52670F]/50" />
                 </label>
                 <label className="block">
-                  <span className="text-xs text-white/45 mb-1.5 block">City</span>
+                  <span className="text-xs text-[#5E6256] mb-1.5 block">City</span>
                   <input value={draft.city} onChange={event => updateDraft('city', event.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg py-2.5 px-3 text-sm text-white focus:outline-none focus:border-[#E49B3A]/50" />
+                    className="w-full bg-[#F7F6EB] border border-[#E7E1D2] rounded-xl py-2.5 px-3 text-sm text-[#14150F] focus:outline-none focus:border-[#52670F]/50" />
                 </label>
                 <label className="block">
-                  <span className="text-xs text-white/45 mb-1.5 block">Seats</span>
+                  <span className="text-xs text-[#5E6256] mb-1.5 block">Seats</span>
                   <input type="number" value={draft.max_participants} onChange={event => updateDraft('max_participants', Number(event.target.value) || 0)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg py-2.5 px-3 text-sm text-white focus:outline-none focus:border-[#E49B3A]/50" />
+                    className="w-full bg-[#F7F6EB] border border-[#E7E1D2] rounded-xl py-2.5 px-3 text-sm text-[#14150F] focus:outline-none focus:border-[#52670F]/50" />
                 </label>
               </div>
 
               <div className="grid lg:grid-cols-2 gap-4 pt-2">
-                <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-                  <p className="text-sm font-semibold text-white mb-3">Registration Form</p>
+                <div className="rounded-[1.25rem] border border-[#E7E1D2] bg-[#FFFCF3] p-4">
+                  <p className="text-sm font-black text-[#14150F] mb-3">Registration Form</p>
                   <div className="space-y-2">
                     {draft.formFields.map(field => (
-                      <div key={field.label} className="flex items-center justify-between rounded-lg bg-black/16 px-3 py-2">
-                        <span className="text-xs text-white/68">{field.label}</span>
-                        <span className="text-[10px] text-white/30">{field.required ? 'required' : 'optional'}</span>
+                      <div key={field.label} className="flex items-center justify-between rounded-xl border border-[#E7E1D2] bg-[#F7F6EB] px-3 py-2">
+                        <span className="text-xs font-semibold text-[#45493E]">{field.label}</span>
+                        <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#7B845D]">{field.required ? 'required' : 'optional'}</span>
                       </div>
                     ))}
                   </div>
                 </div>
-                <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-                  <p className="text-sm font-semibold text-white mb-3">Support Setup</p>
-                  <div className="space-y-3 text-xs text-white/55">
-                    <p><span className="text-[#E49B3A]">Volunteer role suggestions:</span> {draft.volunteerRoles.length ? draft.volunteerRoles.map(role => role.role_name).join(', ') : 'No volunteer roles suggested'}</p>
-                    <p><span className="text-[#E49B3A]">Sponsor package suggestions:</span> {draft.sponsorPackages.length ? draft.sponsorPackages.map(pkg => pkg.title).join(', ') : 'No sponsor packages suggested'}</p>
-                    <p><span className="text-[#E49B3A]">Budget categories:</span> {draft.budgetCategories.length ? draft.budgetCategories.map(item => `${item.type}: ${item.title}`).join(', ') : 'No budget categories suggested'}</p>
-                    <p><span className="text-[#E49B3A]">Certificate:</span> {draft.certificateSetup}</p>
-                    <p className="text-[11px] text-white/35">Suggestions are shown for review and are not saved automatically.</p>
+                <div className="rounded-[1.25rem] border border-[#E7E1D2] bg-[#FFFCF3] p-4">
+                  <p className="text-sm font-black text-[#14150F] mb-3">Support Setup</p>
+                  <div className="space-y-3 text-xs leading-6 text-[#5E6256]">
+                    <p><span className="font-black text-[#52670F]">Volunteer role suggestions:</span> {draft.volunteerRoles.length ? draft.volunteerRoles.map(role => role.role_name).join(', ') : 'No volunteer roles suggested'}</p>
+                    <p><span className="font-black text-[#52670F]">Sponsor package suggestions:</span> {draft.sponsorPackages.length ? draft.sponsorPackages.map(pkg => pkg.title).join(', ') : 'No sponsor packages suggested'}</p>
+                    <p><span className="font-black text-[#52670F]">Budget categories:</span> {draft.budgetCategories.length ? draft.budgetCategories.map(item => `${item.type}: ${item.title}`).join(', ') : 'No budget categories suggested'}</p>
+                    <p><span className="font-black text-[#52670F]">Certificate:</span> {draft.certificateSetup}</p>
+                    <p className="text-[11px] font-semibold text-[#7B845D]">Suggestions are shown for review and are not saved automatically.</p>
                   </div>
                 </div>
               </div>
