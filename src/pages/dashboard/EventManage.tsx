@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from 'react-router';
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import { EventRiskRadar } from '@/components/EventRiskRadar';
 import { EventLocationMap } from '@/components/EventLocationMap';
 import { EventPoster } from '@/components/EventPoster';
 import store from '@/data/store';
@@ -28,7 +29,7 @@ export default function EventManage() {
     return fields.map(({ label, field_type, required, options, sort_order }) => ({ label, field_type, required, options, sort_order }));
   });
   const [saved, setSaved] = useState(false);
-  if (!event) return <DashboardLayout title="Event"><p className="text-white/40">Event not found</p></DashboardLayout>;
+  if (!event) return <DashboardLayout title="Event"><p className="text-[#5E6256]">Event not found</p></DashboardLayout>;
 
   const regs = store.getEventRegistrations(event.id);
   const displayStatus = getEventDisplayStatus(event);
@@ -131,12 +132,12 @@ export default function EventManage() {
 
   return (
     <DashboardLayout title={event.title}>
-      <div className="mb-6">
+      <div className="event-manage-room mb-6">
         <EventPoster event={event} variant="banner" className="w-full h-40 rounded-xl mb-4" />
         <div className="flex items-start justify-between">
           <div>
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#E49B3A]/10 text-[#E49B3A]">{event.category}</span>
-            <p className="text-xs text-white/30 mt-2 flex items-center gap-3">
+            <p className="text-xs text-[#5E6256] mt-2 flex items-center gap-3">
               <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {event.date}</span>
               <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {event.venue}, {event.city}</span>
             </p>
@@ -149,14 +150,14 @@ export default function EventManage() {
         <EventLocationMap event={event} variant="dark" />
       </div>
 
-      <div className="mb-8 glass-card rounded-xl p-5">
+      <div className="event-manage-panel mb-8 rounded-xl p-5">
         <div className="flex flex-col lg:flex-row gap-5">
           <div className="lg:w-64 flex-shrink-0">
             {posterPreview ? (
-              <div className="relative overflow-hidden rounded-xl border border-white/10">
+              <div className="relative overflow-hidden rounded-xl border border-[#DDE8BE]">
                 <img src={posterPreview} alt="New poster preview" className="h-36 w-full object-cover" />
                 <button type="button" onClick={() => handlePosterChange()} disabled={posterSaving}
-                  className="absolute right-2 top-2 rounded-full bg-black/60 p-2 text-white hover:text-[#E49B3A]">
+                  className="absolute right-2 top-2 rounded-full bg-[#14150F]/70 p-2 text-white hover:text-[#E49B3A]">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -165,10 +166,10 @@ export default function EventManage() {
             )}
           </div>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-white">Event Poster</p>
-            <p className="text-xs text-white/35 mt-1 mb-4">Replace the event poster shown on public cards and detail pages. JPG, PNG, or WEBP under 5MB.</p>
-            {posterError && <p className="mb-3 text-xs text-red-300">{posterError}</p>}
-            {posterSuccess && <p className="mb-3 text-xs text-emerald-300">{posterSuccess}</p>}
+            <p className="text-sm font-black text-[#14150F]">Event Poster</p>
+            <p className="text-xs text-[#5E6256] mt-1 mb-4">Replace the event poster shown on public cards and detail pages. JPG, PNG, or WEBP under 5MB.</p>
+            {posterError && <p className="mb-3 text-xs text-red-500">{posterError}</p>}
+            {posterSuccess && <p className="mb-3 text-xs text-emerald-700">{posterSuccess}</p>}
             <div className="flex flex-wrap gap-3">
               <label className="ghost-btn text-sm rounded-full cursor-pointer flex items-center gap-2">
                 <ImagePlus className="w-4 h-4" /> Choose Poster
@@ -187,25 +188,29 @@ export default function EventManage() {
         {quickActions.map((action) => (
           <button key={action.path}
             onClick={() => navigate(`/dashboard/organizer/events/${event.id}/${action.path}`)}
-            className="glass-card rounded-lg p-4 text-left hover:border-[#E49B3A]/20 transition-all group">
+            className="event-manage-action rounded-lg p-4 text-left transition-all group">
             <div className="flex items-center justify-between mb-2">
               <action.icon className={`w-5 h-5 ${action.color}`} />
-              <ArrowRight className="w-4 h-4 text-white/20 group-hover:text-[#E49B3A] transition-colors" />
+              <ArrowRight className="w-4 h-4 text-[#52670F]/35 group-hover:text-[#52670F] transition-colors" />
             </div>
-            <p className="text-lg font-bold text-white">{action.count}</p>
-            <p className="text-[10px] text-white/30">{action.label}</p>
+            <p className="text-lg font-black text-[#14150F]">{action.count}</p>
+            <p className="text-[10px] font-bold uppercase tracking-wide text-[#5E6256]">{action.label}</p>
           </button>
         ))}
       </div>
 
-      <div className="mt-8 glass-card rounded-xl p-5">
+      <div className="mt-8">
+        <EventRiskRadar event={event} />
+      </div>
+
+      <div className="event-manage-panel mt-8 rounded-xl p-5">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
           <div>
             <div className="flex items-center gap-2">
               <FileText className="w-5 h-5 text-[#E49B3A]" />
-              <h2 className="text-base font-semibold text-white">Registration Form</h2>
+              <h2 className="text-base font-black text-[#14150F]">Registration Form</h2>
             </div>
-            <p className="text-xs text-white/35 mt-1">Participants submit this form and wait for organizer approval before tickets are issued.</p>
+            <p className="text-xs text-[#5E6256] mt-1">Participants submit this form and wait for organizer approval before tickets are issued.</p>
           </div>
           <button onClick={addField} className="ghost-btn text-sm rounded-full flex items-center gap-2">
             <Plus className="w-4 h-4" /> Add Field
@@ -214,37 +219,37 @@ export default function EventManage() {
 
         <div className="space-y-3">
           {formFields.map((field, index) => (
-            <div key={`${field.label}-${index}`} className="rounded-lg border border-white/10 bg-white/[0.03] p-3 grid lg:grid-cols-[1.4fr_0.9fr_auto_auto] gap-3">
+            <div key={`${field.label}-${index}`} className="rounded-lg border border-[#DDE8BE] bg-[#FBFFF1] p-3 grid lg:grid-cols-[1.4fr_0.9fr_auto_auto] gap-3">
               <input
                 value={field.label}
                 onChange={e => updateField(index, { label: e.target.value })}
                 placeholder="Field label"
-                className="bg-white/5 border border-white/10 rounded-lg py-2 px-3 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#E49B3A]/50"
+                className="bg-white border border-[#DDE8BE] rounded-lg py-2 px-3 text-sm text-[#14150F] placeholder:text-[#8A8D7B] focus:outline-none focus:border-[#9DBB44]"
               />
               <select
                 value={field.field_type}
                 onChange={e => updateField(index, { field_type: e.target.value as EventFormField['field_type'], options: e.target.value === 'select' ? field.options : [] })}
-                className="bg-white/5 border border-white/10 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-[#E49B3A]/50"
+                className="bg-white border border-[#DDE8BE] rounded-lg py-2 px-3 text-sm text-[#14150F] focus:outline-none focus:border-[#9DBB44]"
               >
                 {['text', 'textarea', 'number', 'email', 'phone', 'select', 'checkbox'].map(type => (
-                  <option key={type} value={type} className="bg-[#1a1a1a]">{type}</option>
+                  <option key={type} value={type}>{type}</option>
                 ))}
               </select>
-              <label className="flex items-center gap-2 text-xs text-white/45">
+              <label className="flex items-center gap-2 text-xs text-[#5E6256]">
                 <input type="checkbox" checked={field.required} onChange={e => updateField(index, { required: e.target.checked })} />
                 Required
               </label>
               <div className="flex items-center gap-2">
-                <button onClick={() => moveField(index, -1)} disabled={index === 0} className="text-xs text-white/35 hover:text-[#E49B3A] disabled:opacity-30">Up</button>
-                <button onClick={() => moveField(index, 1)} disabled={index === formFields.length - 1} className="text-xs text-white/35 hover:text-[#E49B3A] disabled:opacity-30">Down</button>
-                <button onClick={() => deleteField(index)} className="text-red-300/70 hover:text-red-300"><Trash2 className="w-4 h-4" /></button>
+                <button onClick={() => moveField(index, -1)} disabled={index === 0} className="text-xs text-[#5E6256] hover:text-[#52670F] disabled:opacity-30">Up</button>
+                <button onClick={() => moveField(index, 1)} disabled={index === formFields.length - 1} className="text-xs text-[#5E6256] hover:text-[#52670F] disabled:opacity-30">Down</button>
+                <button onClick={() => deleteField(index)} className="text-red-500/70 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
               </div>
               {field.field_type === 'select' && (
                 <input
                   value={field.options.join(', ')}
                   onChange={e => updateField(index, { options: e.target.value.split(',').map(option => option.trim()).filter(Boolean) })}
                   placeholder="Options separated by commas"
-                  className="lg:col-span-4 bg-white/5 border border-white/10 rounded-lg py-2 px-3 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#E49B3A]/50"
+                  className="lg:col-span-4 bg-white border border-[#DDE8BE] rounded-lg py-2 px-3 text-sm text-[#14150F] placeholder:text-[#8A8D7B] focus:outline-none focus:border-[#9DBB44]"
                 />
               )}
             </div>
@@ -253,7 +258,7 @@ export default function EventManage() {
 
         <div className="pt-5 flex items-center gap-3">
           <button onClick={saveForm} className="gold-btn text-sm">Save Form</button>
-          {saved && <span className="text-xs text-emerald-300">Registration form saved.</span>}
+          {saved && <span className="text-xs text-emerald-700">Registration form saved.</span>}
         </div>
       </div>
     </DashboardLayout>

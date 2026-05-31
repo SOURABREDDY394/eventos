@@ -1,6 +1,7 @@
+import { Link } from 'react-router';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import store from '@/data/store';
-import { Ticket, Calendar, MapPin, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Ticket, Calendar, MapPin, Clock, CheckCircle, XCircle, Shield } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import type { Registration } from '@/types';
 
@@ -76,6 +77,11 @@ export default function ParticipantTickets() {
                           )}
                           {hasTicket && (
                             <p className="mono-text text-xs text-[#E49B3A] mt-3">{reg.registration_code}</p>
+                          )}
+                          {reg.status === 'attended' && (
+                            <Link to={`/proof/participant/${reg.id}`} className="workspace-chip mt-3 inline-flex">
+                              <Shield className="w-3 h-3" /> View Proof Engine record
+                            </Link>
                           )}
                         </div>
 

@@ -13,11 +13,11 @@ export function useScrollReveal() {
           }
         });
       },
-      { rootMargin: '0px 0px -12% 0px', threshold: 0.16 },
+      { rootMargin: '0px 0px -8% 0px', threshold: 0.12 },
     );
 
     elements.forEach((element, index) => {
-      element.style.setProperty('--reveal-delay', `${Math.min(index % 6, 5) * 70}ms`);
+      element.style.setProperty('--reveal-delay', `${Math.min(index % 5, 4) * 50}ms`);
       observer.observe(element);
     });
 

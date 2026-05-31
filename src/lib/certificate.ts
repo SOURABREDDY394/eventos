@@ -106,11 +106,11 @@ export async function downloadCertificate(data: CertificateData): Promise<void> 
   ctx.fillText(data.code, W / 2, 600);
   ctx.fillStyle = '#9aa08f';
   ctx.font = '11px Arial, sans-serif';
-  ctx.fillText(`Verify at /verify/${data.code}`, W / 2, 622);
+  ctx.fillText(`Verify at /verify/certificate/${data.code}`, W / 2, 622);
 
   // QR code (right) linking to verification
   try {
-    const verifyUrl = `${window.location.origin}/verify/${data.code}`;
+    const verifyUrl = `${window.location.origin}/verify/certificate/${data.code}`;
     const qr = await qrToDataUrl(verifyUrl, 120);
     const qrImg = await loadImage(qr);
     ctx.drawImage(qrImg, W - 250, 540, 96, 96);

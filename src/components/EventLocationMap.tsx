@@ -2,13 +2,16 @@ import { Building2, Compass, ExternalLink, LocateFixed, MapPin, Navigation, Rout
 import type { Event } from '@/types';
 
 function cleanLocationPart(value?: string | null) {
-  const next = (value || '').trim();
+  const next = (value || '')
+    .trim()
+    .replace(/\bcowoking\b/gi, 'coworking')
+    .replace(/\s+/g, ' ');
   if (!next || next.toLowerCase() === 'to be announced') return '';
   return next;
 }
 
 export function getEventLocationQuery(event: Pick<Event, 'venue' | 'city' | 'title'>) {
-  const query = [cleanLocationPart(event.venue), cleanLocationPart(event.city)].filter(Boolean).join(', ');
+  const query = [cleanLocationPart(event.venue), cleanLocationPart(event.city), 'India'].filter(Boolean).join(', ');
   return query || cleanLocationPart(event.title);
 }
 
@@ -19,7 +22,7 @@ export function getGoogleMapsUrl(event: Pick<Event, 'venue' | 'city' | 'title'>)
 
 function getGoogleMapsEmbedUrl(event: Pick<Event, 'venue' | 'city' | 'title'>) {
   const query = getEventLocationQuery(event);
-  return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&z=14&output=embed`;
+  return `https://www.google.com/maps?q=${encodeURIComponent(query)}&t=m&z=17&output=embed&iwloc=near`;
 }
 
 export function EventLocationMap({ event, variant = 'light' }: { event: Event; variant?: 'light' | 'dark' }) {
@@ -117,7 +120,7 @@ export function EventLocationMap({ event, variant = 'light' }: { event: Event; v
                 <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#F7F3E8]/70 to-transparent" />
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#1A1D11]/45 to-transparent" />
                 <div className="absolute left-4 top-4 max-w-[78%] rounded-full border border-[#D8CCAC] bg-[#FFFCF3]/90 px-4 py-2 text-xs font-black text-[#14150F] shadow-xl backdrop-blur-md">
-                  {event.title}
+                  {venue || event.title}
                 </div>
                 <a
                   href={mapsUrl}

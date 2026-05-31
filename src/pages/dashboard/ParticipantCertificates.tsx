@@ -1,8 +1,9 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import store from '@/data/store';
 import { downloadCertificate } from '@/lib/certificate';
-import { Award, Download, CheckCircle, Calendar, Loader2 } from 'lucide-react';
+import { Award, Download, CheckCircle, Calendar, Loader2, Shield } from 'lucide-react';
 import type { Certificate } from '@/types';
 
 export default function ParticipantCertificates() {
@@ -58,10 +59,16 @@ export default function ParticipantCertificates() {
                   <span className="text-[10px] text-emerald-400">Verified</span>
                 </div>
               </div>
-              <button onClick={() => download(cert)} disabled={busy === cert.id}
-                className="text-[11px] px-3 py-1.5 rounded bg-[#E49B3A]/20 text-[#E49B3A] hover:bg-[#E49B3A]/30 transition-colors flex items-center gap-1 flex-shrink-0 disabled:opacity-50">
-                {busy === cert.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />} Download
-              </button>
+              <div className="flex flex-col sm:flex-row gap-2 flex-shrink-0">
+                <Link to={`/verify/certificate/${cert.certificate_code}`}
+                  className="text-[11px] px-3 py-1.5 rounded bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 transition-colors flex items-center gap-1">
+                  <Shield className="w-3 h-3" /> Verify
+                </Link>
+                <button onClick={() => download(cert)} disabled={busy === cert.id}
+                  className="text-[11px] px-3 py-1.5 rounded bg-[#E49B3A]/20 text-[#E49B3A] hover:bg-[#E49B3A]/30 transition-colors flex items-center gap-1 disabled:opacity-50">
+                  {busy === cert.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />} Download
+                </button>
+              </div>
             </div>
           ))}
         </div>

@@ -70,84 +70,84 @@ export default function PassportPage() {
 
       <main className="pt-28 pb-16">
         <section className="relative max-w-[88rem] mx-auto px-4 sm:px-6">
-          <div className="absolute inset-x-6 top-16 h-72 rounded-full bg-[#DCE7BD]/70 blur-3xl" />
-          <div className="relative grid lg:grid-cols-[1.05fr_0.95fr] gap-6 items-stretch">
-            <div className="rounded-[2.25rem] bg-white border border-[#E7E1D2] p-6 sm:p-8 shadow-[0_24px_70px_rgba(35,40,20,0.10)]">
-              <div className="flex flex-wrap items-center justify-between gap-4 mb-9">
-                <div className="inline-flex items-center gap-2 rounded-full border border-[#D8DEC4] bg-[#F8FAEF] px-4 py-2 text-sm font-black text-[#52670F]">
+          <div className="passport-aura" />
+          <div className="passport-credential">
+            <div className="passport-identity">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#D8DEC4] bg-white/70 px-4 py-2 text-sm font-black text-[#52670F] shadow-sm">
                   <BadgeCheck className="w-4 h-4" />
                   Verified Proof Passport
                 </div>
                 <button
                   onClick={copyLink}
-                  className="inline-flex items-center gap-2 rounded-full border border-[#CBD4A9] bg-white px-4 py-2 text-sm font-black text-[#52670F] hover:bg-[#F2F6E7] transition-colors"
+                  className="inline-flex items-center gap-2 rounded-full border border-[#CBD4A9] bg-white px-4 py-2 text-sm font-black text-[#52670F] shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#F2F6E7]"
                 >
                   <Copy className="w-4 h-4" />
-                  {copied ? 'Copied' : 'Share'}
+                  {copied ? 'Copied' : 'Share Passport'}
                 </button>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-5 sm:items-center">
-                {profile.avatar_url ? (
-                  <img src={profile.avatar_url} alt={profile.full_name} className="w-28 h-28 rounded-[2rem] border border-[#D8DEC4] object-cover shadow-sm" />
-                ) : (
-                  <div className="w-28 h-28 rounded-[2rem] border border-[#D8DEC4] bg-[#EEF5D9] flex items-center justify-center shadow-sm">
-                    <span className="text-4xl font-black text-[#52670F]">{initials}</span>
-                  </div>
-                )}
+              <div className="mt-9 grid gap-7 lg:grid-cols-[auto_1fr] lg:items-center">
+                <div className="passport-photo">
+                  {profile.avatar_url ? (
+                    <img src={profile.avatar_url} alt={profile.full_name} className="h-full w-full object-cover" />
+                  ) : (
+                    <span>{initials}</span>
+                  )}
+                </div>
+
                 <div className="min-w-0">
-                  <p className="text-xs font-black tracking-[0.22em] text-[#6A7D1A] uppercase">Public credential</p>
-                  <h1 className="text-4xl sm:text-6xl font-black tracking-0 leading-none mt-2">{profile.full_name}</h1>
-                  <p className="mt-3 text-base text-[#5E6256] max-w-xl">
+                  <p className="passport-kicker">Public credential</p>
+                  <h1 className="mt-3 text-5xl font-black leading-[0.92] tracking-[-0.04em] sm:text-7xl">{profile.full_name}</h1>
+                  <p className="mt-5 max-w-2xl text-base leading-8 text-[#5E6256]">
                     {profile.bio || 'Verified attendance, certificates, volunteer hours, and earned skills from EventOS records.'}
                   </p>
+                  <div className="mt-6 flex flex-wrap gap-2">
+                    <span className="passport-chip"><Shield className="h-3.5 w-3.5" /> Organizer verified</span>
+                    <span className="passport-chip"><Globe2 className="h-3.5 w-3.5" /> Public record</span>
+                    <span className="passport-chip"><Sparkles className="h-3.5 w-3.5" /> Proof only after action</span>
+                  </div>
                 </div>
               </div>
 
-              <div className="mt-9 grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="mt-9 grid grid-cols-2 gap-3 lg:grid-cols-4">
                 {[
                   { icon: Calendar, value: stats.events, label: 'Events attended' },
                   { icon: Clock, value: stats.hours, label: 'Volunteer hours' },
                   { icon: Award, value: stats.certs, label: 'Certificates' },
                   { icon: Wrench, value: stats.skills, label: 'Skills earned' },
                 ].map((stat) => (
-                  <div key={stat.label} className="rounded-3xl border border-[#E7E1D2] bg-[#FBFAF3] p-4">
-                    <stat.icon className="w-5 h-5 text-[#6A7D1A] mb-4" />
-                    <p className="text-4xl font-black leading-none">{stat.value}</p>
-                    <p className="text-xs font-bold text-[#6B705D] mt-2">{stat.label}</p>
+                  <div key={stat.label} className="passport-stat">
+                    <stat.icon className="w-5 h-5" />
+                    <p>{stat.value}</p>
+                    <span>{stat.label}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <aside className="relative rounded-[2.25rem] bg-[#10120B] p-6 sm:p-8 shadow-[0_24px_70px_rgba(35,40,20,0.18)] overflow-hidden">
-              <div className="absolute right-0 top-0 h-72 w-72 rounded-full bg-[#D8F066]/16 blur-3xl" />
-              <div className="relative">
-                <div className="flex items-center justify-between gap-4 mb-10">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-[#F8FAEF]/15 bg-[#F8FAEF]/[0.08] px-4 py-2 text-sm font-black text-[#D8F066]">
-                    <Shield className="w-4 h-4" />
-                    EventOS verified
-                  </div>
-                  <Globe2 className="w-6 h-6 text-[#E9EDCF]/60" />
-                </div>
-                <p className="text-xs font-black tracking-[0.24em] text-[#D8F066] uppercase">What this proves</p>
-                <h2 className="mt-3 text-3xl sm:text-5xl font-black leading-tight text-[#FFFDF2]">A public record of real event participation.</h2>
-                <p className="mt-5 text-sm sm:text-base leading-7 text-[#D9DDC6]">
-                  Records appear here only after organizer actions like approved attendance, issued certificates, or verified volunteer task completion.
-                </p>
+            <aside className="passport-verify">
+              <div className="passport-seal">
+                <Shield className="h-9 w-9" />
+                <span>EventOS</span>
+              </div>
+              <p className="passport-kicker">What this proves</p>
+              <h2>A real event history, not a self-claimed resume line.</h2>
+              <p>
+                Records appear here only after organizer actions like approved attendance, issued certificates, or verified volunteer task completion.
+              </p>
 
-                <div className="mt-8 grid gap-3">
-                  {[
-                    'Applications do not become proof automatically',
-                    'QR attendance and certificates create verified records',
-                    'Volunteer hours and skills appear after completed tasks',
-                  ].map(item => (
-                    <div key={item} className="flex items-start gap-3 rounded-2xl border border-[#F8FAEF]/15 bg-[#F8FAEF]/[0.07] p-4">
-                      <CheckCircle className="w-5 h-5 text-[#D8F066] flex-shrink-0 mt-0.5" />
-                      <p className="text-sm leading-6 text-[#EEF2D8]">{item}</p>
-                    </div>
-                  ))}
-                </div>
+              <div className="mt-7 grid gap-3">
+                {[
+                  'Applications do not become proof automatically',
+                  'QR attendance and certificates create verified records',
+                  'Volunteer hours and skills appear after completed tasks',
+                ].map(item => (
+                  <div key={item} className="passport-rule">
+                    <CheckCircle className="w-5 h-5" />
+                    <span>{item}</span>
+                  </div>
+                ))}
               </div>
             </aside>
           </div>
@@ -180,7 +180,7 @@ export default function PassportPage() {
             </div>
           )}
 
-          <div className="rounded-[2rem] bg-white border border-[#E7E1D2] p-5 sm:p-7 shadow-sm">
+          <div className="passport-timeline">
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6">
               <div>
                 <p className="text-xs font-black tracking-[0.22em] text-[#6A7D1A] uppercase">Record timeline</p>

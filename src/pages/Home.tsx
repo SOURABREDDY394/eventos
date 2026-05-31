@@ -1,8 +1,9 @@
 import { Link, useNavigate } from 'react-router';
 import { useState } from 'react';
-import { ArrowRight, Award, Bot, CalendarDays, CheckCircle2, ClipboardCheck, FileText, QrCode, ShieldCheck, Sparkles, Ticket, Users } from 'lucide-react';
+import { ArrowRight, Award, Bot, CalendarDays, ClipboardCheck, FileText, QrCode, ShieldCheck, Sparkles, Ticket, Users } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { ProjectLaptopShowcase } from '@/components/ProjectLaptopShowcase';
 import store from '@/data/store';
 import { useAuth } from '@/hooks/useAuth';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
@@ -237,32 +238,16 @@ export default function Home() {
                 <p className="text-sm font-bold text-[#D8F066]">HOW EVENT ORGANIZERS USE IT</p>
                 <h2 className="mt-3 text-4xl sm:text-5xl font-black leading-tight">Chat creates the event. Dashboards run the room.</h2>
                 <p className="mt-5 text-white/62 leading-7">
-                  The AI builder creates the setup. Event management handles forms, applications, attendance, certificates, volunteers,
-                  sponsors, and budget without making those supporting modules the whole product.
+                  EventOS is an AI Event Operations Platform for event creation, registrations, QR check-ins, sponsor workflows,
+                  volunteer management, attendance, and certificate automation.
                 </p>
                 <div className="mt-7 flex flex-wrap gap-3">
-                  <Link to="/login" className="rounded-full bg-[#D8F066] px-6 py-3 text-sm font-black text-[#10120B]">Start Creating</Link>
+                  <button onClick={startCreating} className="rounded-full bg-[#D8F066] px-6 py-3 text-sm font-black text-[#10120B]">Start Creating</button>
                   <Link to="/events" className="rounded-full border border-white/20 px-6 py-3 text-sm font-bold text-white">Browse Events</Link>
                 </div>
               </div>
 
-              <div className="motion-depth-card rounded-[1.5rem] bg-white text-[#15170F] p-5 shadow-2xl" data-scroll-reveal="tilt-right">
-                <div className="flex items-center justify-between border-b border-black/10 pb-4 mb-4">
-                  <div className="flex items-center gap-2">
-                    <Bot className="w-5 h-5 text-[#5C7415]" />
-                    <span className="font-black">EventOS generated setup</span>
-                  </div>
-                  <span className="rounded-full bg-[#ECF6D6] px-3 py-1 text-xs font-bold text-[#5C7415]">Ready</span>
-                </div>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  {['Event draft created', 'Registration form generated', 'Approval flow enabled', 'Volunteer roles suggested', 'Sponsor packages drafted', 'Certificate workflow ready'].map(item => (
-                    <div key={item} className="rounded-xl bg-[#F6F5EC] p-4 flex items-center gap-3">
-                      <CheckCircle2 className="w-4 h-4 text-[#5C7415]" />
-                      <span className="text-sm font-semibold">{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <ProjectLaptopShowcase />
             </div>
           </div>
         </section>

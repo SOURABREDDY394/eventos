@@ -12,12 +12,12 @@ export default function VolunteerDashboard() {
   const opportunities = useSyncedPublishedEvents().slice(0, 3);
 
   const statCards = [
-    { icon: HeartHandshake, label: 'Applications Submitted', value: stats.applications, tone: 'bg-[#EDF7EC] text-[#53710C]' },
-    { icon: Award, label: 'Approved Applications', value: stats.approvedApplications, tone: 'bg-[#F1FFF5] text-[#147142]' },
-    { icon: ClipboardList, label: 'Assigned Tasks', value: stats.assignedTasks, tone: 'bg-[#F7F7D9] text-[#5D6710]' },
-    { icon: Clock, label: 'Completed Hours', value: stats.completedHours, tone: 'bg-[#EAF1FF] text-[#315B92]' },
-    { icon: Wrench, label: 'Skills Earned', value: stats.skillsEarned, tone: 'bg-[#F4EEFF] text-[#7053A6]' },
-    { icon: Shield, label: 'Proof Records', value: stats.proofRecords, tone: 'bg-[#FFF4DE] text-[#A06D11]' },
+    { icon: HeartHandshake, label: 'Applications Submitted', value: stats.applications },
+    { icon: Award, label: 'Approved Applications', value: stats.approvedApplications },
+    { icon: ClipboardList, label: 'Assigned Tasks', value: stats.assignedTasks },
+    { icon: Clock, label: 'Completed Hours', value: stats.completedHours },
+    { icon: Wrench, label: 'Skills Earned', value: stats.skillsEarned },
+    { icon: Shield, label: 'Proof Records', value: stats.proofRecords },
   ];
 
   const actions = [
@@ -62,18 +62,18 @@ export default function VolunteerDashboard() {
     <DashboardLayout title="Volunteer Dashboard">
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
         {statCards.map((stat) => (
-          <div key={stat.label} className={`rounded-2xl border border-black/10 p-4 shadow-sm ${stat.tone}`}>
+          <div key={stat.label} className="workspace-stat-card">
             <stat.icon className="w-5 h-5 mb-3" />
             <p className="text-2xl font-black">{stat.value}</p>
-            <p className="text-[10px] font-black tracking-wide uppercase">{stat.label}</p>
+            <p className="text-[10px] font-black tracking-wide uppercase text-[#5E6256]">{stat.label}</p>
           </div>
         ))}
       </div>
 
       <div className="grid md:grid-cols-3 gap-4 mb-8">
         {actions.map((action) => (
-          <button key={action.title} onClick={() => navigate(action.path)} className="rounded-[1.5rem] border border-[#E1D8BE] bg-[#FFFCF3] p-5 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(82,103,15,0.12)]">
-            <action.icon className="w-7 h-7 text-[#52670F] mb-3" />
+          <button key={action.title} onClick={() => navigate(action.path)} className="workspace-card rounded-[1.5rem] p-5 text-left">
+            <span className="workspace-icon mb-3"><action.icon className="w-5 h-5" /></span>
             <h2 className="text-base font-black text-[#14150F]">{action.title}</h2>
             <p className="text-sm text-[#5E6256] mt-2 min-h-10">{action.text}</p>
             <span className="inline-flex mt-4 text-xs font-black text-[#52670F]">{action.button}</span>
@@ -87,14 +87,14 @@ export default function VolunteerDashboard() {
       </div>
 
       {opportunities.length === 0 ? (
-        <div className="rounded-[2rem] border border-dashed border-[#D9D0B8] bg-[#FFFCF3] p-8 text-center">
+        <div className="workspace-empty">
           <Sparkles className="w-12 h-12 text-[#52670F]/30 mx-auto mb-3" />
           <p className="text-sm font-semibold text-[#5E6256]">No volunteer opportunities available yet.</p>
         </div>
       ) : (
         <div className="grid gap-4">
           {opportunities.map((event) => (
-            <div key={event.id} className="rounded-[1.5rem] border border-[#E1D8BE] bg-[#FFFCF3] p-4 flex flex-col sm:flex-row gap-4 shadow-sm">
+            <div key={event.id} className="workspace-card rounded-[1.5rem] p-4 flex flex-col sm:flex-row gap-4">
               <EventPoster event={event} className="w-full sm:w-36 h-24 rounded-lg flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FFF4DE] text-[#A06D11]">{event.category}</span>

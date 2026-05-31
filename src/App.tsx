@@ -6,6 +6,8 @@ import EventsPage from '@/pages/EventsPage';
 import EventDetail from '@/pages/EventDetail';
 import PassportPage from '@/pages/PassportPage';
 import VerifyCertificate from '@/pages/VerifyCertificate';
+import ParticipantProofPage from '@/pages/ParticipantProofPage';
+import VolunteerProofPage from '@/pages/VolunteerProofPage';
 import OrganizerDashboard from '@/pages/dashboard/OrganizerDashboard';
 import OrganizerEvents from '@/pages/dashboard/OrganizerEvents';
 import CreateEvent from '@/pages/dashboard/CreateEvent';
@@ -47,6 +49,9 @@ export default function App() {
       <Route path="/events/:slug" element={<EventDetail />} />
       <Route path="/passport/:username" element={<PassportPage />} />
       <Route path="/verify/:certificateId" element={<VerifyCertificate />} />
+      <Route path="/verify/certificate/:id" element={<VerifyCertificate />} />
+      <Route path="/proof/participant/:id" element={<ParticipantProofPage />} />
+      <Route path="/proof/volunteer/:id" element={<VolunteerProofPage />} />
 
       {/* Organizer Dashboard */}
       <Route path="/dashboard/organizer" element={<OrganizerDashboard />} />

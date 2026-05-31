@@ -20,7 +20,7 @@ export function Footer() {
             <div className="space-y-2.5">
               <Link to="/events" className="block text-sm text-[#D9CFBC] hover:text-[#F7C56B] transition-colors">Events</Link>
               <Link to="/passport/sourab" className="block text-sm text-[#D9CFBC] hover:text-[#F7C56B] transition-colors">Proof Passport</Link>
-              <Link to="/verify/CERT-AB12CD-EFGH" className="block text-sm text-[#D9CFBC] hover:text-[#F7C56B] transition-colors">Verify Certificate</Link>
+              <Link to="/verify/certificate/CERT-AB12CD-EFGH" className="block text-sm text-[#D9CFBC] hover:text-[#F7C56B] transition-colors">Verify Certificate</Link>
             </div>
           </div>
           <div>

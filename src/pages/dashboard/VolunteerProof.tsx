@@ -18,8 +18,8 @@ export default function VolunteerProof() {
           <p className="text-base font-semibold text-white">Verified volunteer contributions</p>
           <p className="text-xs text-white/35 mt-1">Hours, skills, and completed tasks that appear on your public proof passport.</p>
         </div>
-        <Link to={`/passport/${user?.username}`} className="gold-btn text-sm flex items-center justify-center gap-2">
-          View Public Proof <ExternalLink className="w-4 h-4" />
+        <Link to={`/proof/volunteer/${user?.id || user?.username}`} className="gold-btn text-sm flex items-center justify-center gap-2">
+          View Volunteer Proof <ExternalLink className="w-4 h-4" />
         </Link>
       </div>
 

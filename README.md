@@ -1,21 +1,71 @@
-# EventOS
+# EventOS - AI Event Operations Platform
 
-EventOS is an event-tech MVP for creating, managing, and verifying events. The product story is simple: organizers create events, participants browse and apply, organizers approve applications, approved participants receive QR tickets, attendance is verified, and certificates/proof records can become part of a public Proof Passport.
+EventOS is a full-stack event-tech platform that helps organizers create events from a prompt, manage approval-based registrations, run QR check-ins, coordinate volunteers and sponsors, track budget readiness, issue certificates, and turn real event actions into verified proof.
 
-The app is built as a Vite React frontend with Supabase schema, storage, and Edge Function support. Demo access is currently one-click local access for fast project review, while event data infrastructure and Groq-backed AI generation are prepared through Supabase.
+The core product story is:
+
+```text
+Create event -> Participants apply -> Organizer approves -> QR check-in -> Certificates -> Proof Engine
+```
+
+## Screenshots
+
+### Prompt to Event
+
+EventOS lets an organizer describe an event in natural language and generate an editable event draft with registration setup, volunteer support, sponsor suggestions, and certificate workflow.
+
+![EventOS prompt to event builder](public/readme/prompt-to-event.png)
+
+### EventOS Proof Engine
+
+Proof Engine converts verified actions into public proof for participants, volunteers, certificates, and sponsor impact.
+
+![EventOS Proof Engine participant proof](public/readme/proof-engine.png)
 
 ## Project Overview
 
-EventOS focuses on two primary experiences:
+EventOS is designed for hackathon-ready event operations. It is not just a static event listing site. It connects the full workflow from event creation to verifiable participation.
 
-- Organizer experience: create and manage events, including AI-assisted event draft generation, manual event creation, registration forms, application review, attendance, volunteers, sponsors, budget, and certificates.
-- Participant experience: browse upcoming events, submit approval-based registrations, track pending/approved/rejected applications, view QR tickets after approval, and access certificates/proof.
+Main experiences:
 
-Supporting workspaces are included for:
+- **Organizer:** create events manually or with AI, manage applications, check-ins, volunteers, sponsors, budget, certificates, and risk insights.
+- **Participant:** browse upcoming events, apply through organizer forms, wait for approval, receive QR tickets after approval, and collect certificates/proof.
+- **Volunteer:** apply for roles, receive tasks, update task status, earn points, build verified volunteer proof.
+- **Sponsor:** discover sponsor-ready events, submit interest, and view sponsor impact summaries.
+- **Public Proof:** verify certificates and open public proof pages for participants and volunteers.
 
-- Volunteers: applications, assigned tasks, completed hours, skills, and proof records.
-- Sponsors: browse events and manage sponsor interests.
-- Public proof: Proof Passport and certificate verification routes.
+## Features Implemented
+
+- AI Create Event page using a secure Supabase Edge Function for Groq-powered event draft generation.
+- Manual event creation with poster upload support.
+- Public events page with upcoming/past event lifecycle filtering.
+- Event detail pages with event posters, venue map, registration, volunteer, and sponsor actions.
+- Approval-based participant registration flow.
+- QR ticket generation only after organizer approval.
+- Organizer registration review with approve/reject states.
+- QR/manual attendance check-in for approved registrations.
+- Certificate generation and downloadable certificate images.
+- Public certificate verification at `/verify/certificate/:id`.
+- EventOS Proof Engine:
+  - participant proof pages at `/proof/participant/:id`
+  - volunteer proof pages at `/proof/volunteer/:id`
+  - certificate verification
+  - sponsor impact summaries
+- Volunteer applications, tasks, completed hours, skills, proof records, and leaderboard points.
+- Sponsor packages, sponsor interests, AI sponsor proposal tools, and sponsor matching.
+- Budget tracking and EventOS Risk Radar / Event Day Simulator.
+- Premium responsive UI with mobile-first dashboard pages.
+
+## Tech Stack Used
+
+- **Frontend:** React 19, TypeScript, Vite
+- **Routing:** React Router
+- **Styling:** Tailwind CSS, custom EventOS design system
+- **Backend/Data:** Supabase PostgreSQL, RLS-ready schema, Supabase Storage
+- **AI:** Groq API through Supabase Edge Functions
+- **QR:** `qrcode.react`
+- **Charts/UI:** Recharts, Radix UI primitives, Lucide React icons
+- **Deployment:** Vercel frontend + Supabase backend/Edge Functions
 
 ## Setup Instructions
 
@@ -31,18 +81,24 @@ Create `.env.local` in the project root:
 
 ```env
 VITE_SUPABASE_URL=your_supabase_project_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_or_publishable_key
 ```
 
-Do not add `GROQ_API_KEY` to any Vite env file. Vite env variables are exposed to the browser.
+Do **not** place the Groq key in Vite environment variables. Vite variables are exposed to the browser.
 
-### 3. Run the app locally
+### 3. Run locally
 
 ```bash
 npm run dev
 ```
 
-If port `5173` is busy, Vite may choose another port such as `3000`.
+The app usually runs at:
+
+```text
+http://127.0.0.1:3000
+```
+
+or Vite may choose another available port.
 
 ### 4. Build for production
 
@@ -50,19 +106,33 @@ If port `5173` is busy, Vite may choose another port such as `3000`.
 npm run build
 ```
 
-### 5. Set up Supabase database
+### 5. Supabase setup
 
-Run the SQL migrations in `supabase/migrations` in your Supabase project, starting with:
+Run the SQL migrations in `supabase/migrations`.
 
-```text
-supabase/migrations/001_eventos_schema.sql
-```
+Required core tables include:
 
-The schema includes tables for profiles, events, registrations, attendance, event form fields, volunteers, sponsors, budgets, certificates, proof records, and storage buckets.
+- `profiles`
+- `events`
+- `registrations`
+- `attendance`
+- `event_form_fields`
+- `volunteer_applications`
+- `volunteer_tasks`
+- `sponsor_packages`
+- `sponsor_interests`
+- `budgets`
+- `certificates`
+- `proof_records`
 
-### 6. Deploy Groq Edge Functions
+Required storage buckets:
 
-Set the Groq key as a Supabase secret:
+- `event-posters`
+- `certificates`
+
+### 6. Groq Edge Function setup
+
+Store the Groq API key as a Supabase secret:
 
 ```bash
 supabase secrets set GROQ_API_KEY=your_groq_key
@@ -80,54 +150,6 @@ Optional sponsor pitch function:
 supabase functions deploy generate-sponsor-pitch
 ```
 
-Optional model override:
-
-```bash
-supabase secrets set GROQ_MODEL=llama-3.3-70b-versatile
-```
-
-Important: the current app uses one-click demo login for review. Real Supabase writes protected by RLS, such as inserting events into `public.events`, require a real Supabase Auth organizer session or a secure server-side create-event flow.
-
-## Features Implemented
-
-- Premium EventOS landing page with AI event creation prompt.
-- One-click demo login for fast access to the product.
-- Dashboard workspace routing for Organizer, Participant, Volunteer, and Sponsor.
-- AI Create Event page wired to a secure Supabase Edge Function for Groq-powered structured event draft generation.
-- Editable event draft form after AI generation.
-- Manual event creation flow.
-- Event poster upload helper and public event poster/fallback display.
-- Public events listing with upcoming/past lifecycle filtering.
-- Event detail page with approval-based registration flow.
-- Registration statuses: pending, approved, rejected, attended, cancelled.
-- Organizer registration review with approve/reject behavior.
-- Participant applications and tickets pages with pending/approved/rejected states.
-- QR ticket availability only after approval.
-- Attendance logic guarded by registration status.
-- Volunteer module with applications, task tracking, completed hours, skills, and proof records.
-- Sponsor module with event browsing and sponsor interests.
-- Budget and certificate management surfaces.
-- Public Proof Passport and certificate verification routes.
-- Supabase database migrations and RLS policies.
-- Supabase Storage buckets for event posters and certificates.
-- Supabase Edge Function for Groq sponsor pitch generation.
-
-## Tech Stack Used
-
-- React 19
-- TypeScript
-- Vite
-- React Router
-- Tailwind CSS
-- Radix UI primitives
-- Lucide React icons
-- Supabase JavaScript client
-- Supabase PostgreSQL, Row Level Security, Storage, and Edge Functions
-- Groq API through Supabase Edge Functions
-- QR code rendering with `qrcode.react`
-- Charts with Recharts
-- Toasts with Sonner
-
 ## Useful Commands
 
 ```bash
@@ -137,8 +159,9 @@ npm run lint
 npm run preview
 ```
 
-## Repository Notes
+## Notes
 
-- `.env.local` is ignored and should not be committed.
-- `dist`, `node_modules`, and local scrape/reference files are ignored.
-- Groq keys must live only in Supabase secrets, never in frontend environment variables.
+- The project currently uses one-click demo access for fast judging and product review.
+- Supabase is used for event data, storage, and Edge Functions.
+- Groq must stay server-side through Supabase Edge Functions.
+- No Groq key should be committed or exposed through `VITE_GROQ_API_KEY`.

@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { EventPoster } from '@/components/EventPoster';
+import { SponsorImpactSummary } from '@/components/SponsorImpactSummary';
 import store from '@/data/store';
 import { useSyncedPublishedEvents } from '@/hooks/useSyncedEvents';
 import { eventStatusBadgeClass, getEventDisplayStatus } from '@/lib/eventLifecycle';
-import { Calendar, MapPin, Users, Handshake, CheckCircle } from 'lucide-react';
+import { Calendar, MapPin, Users, Handshake, CheckCircle, Sparkles } from 'lucide-react';
 
 export default function SponsorEvents() {
   const user = store.getCurrentUser();
@@ -23,12 +24,18 @@ export default function SponsorEvents() {
 
   return (
     <DashboardLayout title="Browse Events">
-      <div className="grid gap-4">
-        {events.map((event) => {
+      {events.length === 0 ? (
+        <div className="workspace-empty">
+          <Sparkles className="w-12 h-12 text-[#52670F]/30 mx-auto mb-3" />
+          <p className="text-sm font-semibold text-[#5E6256]">No sponsor-ready upcoming events are available yet.</p>
+        </div>
+      ) : (
+        <div className="grid gap-4">
+          {events.map((event) => {
           const regs = store.getEventRegistrations(event.id);
           const isSubmitted = submitted.has(event.id);
           return (
-            <div key={event.id} className="rounded-[1.5rem] border border-[#E1D8BE] bg-[#FFFCF3] p-4 shadow-sm transition-all hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(82,103,15,0.12)]">
+            <div key={event.id} className="workspace-card rounded-[1.5rem] p-4">
               <div className="flex flex-col sm:flex-row gap-4">
                 <EventPoster event={event} className="w-full sm:w-32 h-24 rounded-lg flex-shrink-0" />
                 <div className="flex-1 min-w-0">
@@ -41,9 +48,9 @@ export default function SponsorEvents() {
                       <h3 className="text-base font-black text-[#14150F] mt-1">{event.title}</h3>
                     </div>
                     {isSubmitted ? (
-                      <span className="text-[10px] px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center gap-1 flex-shrink-0"><CheckCircle className="w-3 h-3" /> Submitted</span>
+                      <span className="workspace-chip flex-shrink-0"><CheckCircle className="w-3 h-3" /> Submitted</span>
                     ) : (
-                      <button onClick={() => handleInterest(event.id)} className="text-[10px] px-3 py-1.5 rounded-full bg-[#E49B3A]/20 text-[#E49B3A] hover:bg-[#E49B3A]/30 transition-colors flex items-center gap-1 flex-shrink-0"><Handshake className="w-3 h-3" /> Show Interest</button>
+                      <button onClick={() => handleInterest(event.id)} className="workspace-chip transition-transform hover:-translate-y-0.5 flex-shrink-0"><Handshake className="w-3 h-3" /> Show Interest</button>
                     )}
                   </div>
                   <p className="text-xs text-[#5E6256] mt-1 line-clamp-2">{event.description}</p>
@@ -54,10 +61,14 @@ export default function SponsorEvents() {
                   </div>
                 </div>
               </div>
+              <div className="mt-4">
+                <SponsorImpactSummary eventId={event.id} compact />
+              </div>
             </div>
           );
-        })}
-      </div>
+          })}
+        </div>
+      )}
     </DashboardLayout>
   );
 }

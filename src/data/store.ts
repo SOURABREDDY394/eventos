@@ -114,6 +114,56 @@ function migrateSeedEventDates() {
   if (changed) setItem(STORAGE_KEYS.events, migrated);
 }
 
+function ensureSeedRows<T extends { id: string }>(key: string, seedRows: T[], options?: { updateIds?: string[] }) {
+  const existing = getItem<T[]>(key, []);
+  const byId = new Map(existing.map(row => [row.id, row]));
+  let changed = false;
+
+  seedRows.forEach((seedRow) => {
+    if (!byId.has(seedRow.id)) {
+      byId.set(seedRow.id, seedRow);
+      changed = true;
+      return;
+    }
+
+    if (options?.updateIds?.includes(seedRow.id)) {
+      byId.set(seedRow.id, { ...byId.get(seedRow.id), ...seedRow });
+      changed = true;
+    }
+  });
+
+  if (changed) setItem(key, Array.from(byId.values()));
+}
+
+function ensureCreatedShowcaseEvents() {
+  const showcaseEventIds = [
+    'e1',
+    'e2',
+    'e3',
+    'manual-pubg-arena-2026',
+    'manual-ai-builders-2026',
+    'manual-startup-night-2026',
+  ];
+  const showcaseRoleIds = ['vr-pubg-1', 'vr-pubg-2', 'vr-ai-builders-1', 'vr-startup-night-1'];
+  const showcasePackageIds = ['sp-pubg-1', 'sp-pubg-2', 'sp-ai-builders-1', 'sp-startup-night-1'];
+  const showcaseBudgetIds = [
+    'b-pubg-1',
+    'b-pubg-2',
+    'b-pubg-3',
+    'b-ai-builders-1',
+    'b-ai-builders-2',
+    'b-ai-builders-3',
+    'b-startup-1',
+    'b-startup-2',
+    'b-startup-3',
+  ];
+
+  ensureSeedRows(STORAGE_KEYS.events, seedEvents, { updateIds: showcaseEventIds });
+  ensureSeedRows(STORAGE_KEYS.volunteerRoles, seedVolunteerRoles, { updateIds: showcaseRoleIds });
+  ensureSeedRows(STORAGE_KEYS.sponsorPackages, seedSponsorPackages, { updateIds: showcasePackageIds });
+  ensureSeedRows(STORAGE_KEYS.budgetItems, seedBudgetItems, { updateIds: showcaseBudgetIds });
+}
+
 function initStore() {
   seedIfMissingOrEmpty(STORAGE_KEYS.profiles, seedProfiles);
   seedIfMissingOrEmpty(STORAGE_KEYS.events, seedEvents);
@@ -129,6 +179,7 @@ function initStore() {
   seedIfMissingOrEmpty(STORAGE_KEYS.certificates, seedCertificates);
   seedIfMissingOrEmpty(STORAGE_KEYS.passportRecords, seedPassportRecords);
   migrateSeedEventDates();
+  ensureCreatedShowcaseEvents();
 }
 
 initStore();

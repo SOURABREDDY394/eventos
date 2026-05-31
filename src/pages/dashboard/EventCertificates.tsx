@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams } from 'react-router';
+import { Link, useParams } from 'react-router';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import store from '@/data/store';
 import { downloadCertificate } from '@/lib/certificate';
@@ -23,7 +23,7 @@ export default function EventCertificates() {
 
   const issue = (participantId: string, participantName: string) => {
     setError('');
-    store.issueCertificate({
+    const cert = store.issueCertificate({
       event,
       userId: participantId,
       userName: participantName,
@@ -33,7 +33,7 @@ export default function EventCertificates() {
     store.createPassportRecord({
       user_id: participantId, event_id: event.id, record_type: 'certificate',
       title: `${event.title} Certificate`, description: 'Certificate of Participation',
-      skills: [event.category], hours: 0, verified_at: new Date().toISOString(),
+      skills: [event.category], hours: 0, certificate_id: cert.certificate_code, verified_at: new Date().toISOString(),
     });
     setVersion(v => v + 1);
   };
@@ -92,6 +92,10 @@ export default function EventCertificates() {
                       className="text-[11px] px-3 py-1.5 rounded bg-[#E49B3A]/20 text-[#E49B3A] hover:bg-[#E49B3A]/30 transition-colors flex items-center gap-1 disabled:opacity-50">
                       {busy === cert.certificate_code ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />} Download
                     </button>
+                    <Link to={`/verify/certificate/${cert.certificate_code}`}
+                      className="text-[11px] px-3 py-1.5 rounded bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 transition-colors flex items-center gap-1">
+                      Verify
+                    </Link>
                   </div>
                 ) : (
                   <button onClick={() => issue(reg.participant_id, name)}

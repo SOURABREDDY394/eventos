@@ -35,7 +35,7 @@ export default function OrganizerModuleIndex() {
     <DashboardLayout title={current.title}>
       <p className="text-sm text-[#5E6256] mb-6">{current.text}</p>
       {events.length === 0 ? (
-        <div className="rounded-[2rem] border border-dashed border-[#D9D0B8] bg-[#FFFCF3] p-8 text-center shadow-sm">
+        <div className="workspace-empty">
           <ClipboardList className="w-12 h-12 text-[#52670F]/30 mx-auto mb-3" />
           <p className="text-sm font-semibold text-[#5E6256] mb-4">Create an event first, then manage {current.title.toLowerCase()} from the event workspace.</p>
           <button onClick={() => navigate('/dashboard/organizer/create-with-ai')} className="gold-btn text-sm">Create with AI</button>
@@ -46,7 +46,7 @@ export default function OrganizerModuleIndex() {
             <button
               key={event.id}
               onClick={() => navigate(`/dashboard/organizer/events/${event.id}/${current.path}`)}
-              className="rounded-[1.5rem] border border-[#E1D8BE] bg-[#FFFCF3] p-4 text-left transition-all hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(82,103,15,0.12)] flex items-center gap-4"
+              className="workspace-card rounded-[1.5rem] p-4 text-left flex items-center gap-4"
             >
               <EventPoster event={event} variant="thumb" className="w-14 h-14 rounded-lg flex-shrink-0" />
               <div className="flex-1 min-w-0">
