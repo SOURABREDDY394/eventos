@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { ArrowRight, CheckCircle2, LockKeyhole, Shield, UserRound } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Github, Instagram, Linkedin, LockKeyhole, Shield, UserRound } from 'lucide-react';
 import { getDashboardRoute, useAuth } from '@/hooks/useAuth';
 
 const productPoints = [
@@ -21,6 +21,9 @@ export default function Login() {
   const [name, setName] = useState(user?.full_name || '');
   const [username, setUsername] = useState(user?.username || '');
   const [email, setEmail] = useState(user?.email || '');
+  const [instagramUrl, setInstagramUrl] = useState(user?.instagram_url || '');
+  const [linkedinUrl, setLinkedinUrl] = useState(user?.linkedin_url || '');
+  const [githubUrl, setGithubUrl] = useState(user?.github_url || '');
   const [error, setError] = useState('');
 
   const previewUsername = useMemo(() => cleanUsername(username || name.replace(/\s+/g, '')), [name, username]);
@@ -41,7 +44,14 @@ export default function Login() {
       return;
     }
 
-    loginDemo({ name: fullName, username: finalUsername, email });
+    loginDemo({
+      name: fullName,
+      username: finalUsername,
+      email,
+      instagram_url: instagramUrl,
+      linkedin_url: linkedinUrl,
+      github_url: githubUrl,
+    });
     navigate('/dashboard/organizer');
   };
 
@@ -115,6 +125,44 @@ export default function Login() {
                   className="w-full rounded-2xl border border-[#E1D8BE] bg-[#F7F6EB] px-4 py-3 text-base font-semibold text-[#14150F] placeholder:text-[#9AA08D] focus:border-[#52670F]/50 focus:outline-none"
                 />
               </label>
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                <label className="block">
+                  <span className="mb-1.5 flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.12em] text-[#7B845D]">
+                    <Instagram className="h-3.5 w-3.5" /> Insta
+                  </span>
+                  <input
+                    value={instagramUrl}
+                    onChange={event => setInstagramUrl(event.target.value)}
+                    placeholder="https://instagram.com/..."
+                    className="w-full rounded-2xl border border-[#E1D8BE] bg-[#F7F6EB] px-3 py-3 text-sm font-semibold text-[#14150F] placeholder:text-[#9AA08D] focus:border-[#52670F]/50 focus:outline-none"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="mb-1.5 flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.12em] text-[#7B845D]">
+                    <Linkedin className="h-3.5 w-3.5" /> LinkedIn
+                  </span>
+                  <input
+                    value={linkedinUrl}
+                    onChange={event => setLinkedinUrl(event.target.value)}
+                    placeholder="https://linkedin.com/in/..."
+                    className="w-full rounded-2xl border border-[#E1D8BE] bg-[#F7F6EB] px-3 py-3 text-sm font-semibold text-[#14150F] placeholder:text-[#9AA08D] focus:border-[#52670F]/50 focus:outline-none"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="mb-1.5 flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.12em] text-[#7B845D]">
+                    <Github className="h-3.5 w-3.5" /> GitHub
+                  </span>
+                  <input
+                    value={githubUrl}
+                    onChange={event => setGithubUrl(event.target.value)}
+                    placeholder="https://github.com/..."
+                    className="w-full rounded-2xl border border-[#E1D8BE] bg-[#F7F6EB] px-3 py-3 text-sm font-semibold text-[#14150F] placeholder:text-[#9AA08D] focus:border-[#52670F]/50 focus:outline-none"
+                  />
+                </label>
+              </div>
 
               {error && <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">{error}</p>}
 

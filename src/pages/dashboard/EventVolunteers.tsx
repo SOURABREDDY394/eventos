@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams } from 'react-router';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import store from '@/data/store';
-import { AlertTriangle, CheckCircle, Clock, ClipboardList, MapPin, Plus, Users, XCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Clock, ClipboardList, Github, Instagram, Linkedin, MapPin, Plus, Users, XCircle } from 'lucide-react';
 import type { VolunteerApplication, VolunteerRole } from '@/types';
 
 const defaultVolunteerRoles: Omit<VolunteerRole, 'id' | 'event_id'>[] = [
@@ -184,6 +184,25 @@ export default function EventVolunteers() {
             </div>
           )}
           {app.reason && <p className="text-xs text-[#62665a] mt-2">{app.reason}</p>}
+          {(app.volunteer?.instagram_url || app.volunteer?.linkedin_url || app.volunteer?.github_url) && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {app.volunteer?.instagram_url && (
+                <a href={app.volunteer.instagram_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-full border border-[#e4ddca] bg-[#fbfaf2] px-2.5 py-1 text-[10px] font-black text-[#55720e] hover:bg-[#eef7d7]">
+                  <Instagram className="h-3 w-3" /> Instagram
+                </a>
+              )}
+              {app.volunteer?.linkedin_url && (
+                <a href={app.volunteer.linkedin_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-full border border-[#e4ddca] bg-[#fbfaf2] px-2.5 py-1 text-[10px] font-black text-[#55720e] hover:bg-[#eef7d7]">
+                  <Linkedin className="h-3 w-3" /> LinkedIn
+                </a>
+              )}
+              {app.volunteer?.github_url && (
+                <a href={app.volunteer.github_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-full border border-[#e4ddca] bg-[#fbfaf2] px-2.5 py-1 text-[10px] font-black text-[#55720e] hover:bg-[#eef7d7]">
+                  <Github className="h-3 w-3" /> GitHub
+                </a>
+              )}
+            </div>
+          )}
         </div>
         <span className={`text-[10px] px-2 py-0.5 rounded-full border capitalize ${statusClass(app.status)}`}>{app.status}</span>
       </div>

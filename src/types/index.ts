@@ -8,6 +8,9 @@ export interface Profile {
   role: UserRole;
   avatar_url?: string;
   bio?: string;
+  instagram_url?: string;
+  linkedin_url?: string;
+  github_url?: string;
   passport_slug?: string;
   created_at: string;
 }

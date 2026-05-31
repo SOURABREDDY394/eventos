@@ -6,6 +6,9 @@ export type DemoUser = {
   name: string;
   username: string;
   email?: string;
+  instagram_url?: string;
+  linkedin_url?: string;
+  github_url?: string;
   role: UserRole;
 };
 
@@ -14,7 +17,7 @@ type AuthContextValue = {
   demoUser: DemoUser | null;
   currentRole: UserRole | null;
   loading: boolean;
-  loginDemo: (input?: { name?: string; username?: string; email?: string }) => Profile;
+  loginDemo: (input?: { name?: string; username?: string; email?: string; instagram_url?: string; linkedin_url?: string; github_url?: string }) => Profile;
   continueAs: (role: UserRole) => Profile;
   signOut: () => Promise<void>;
 };
@@ -105,6 +108,9 @@ export function profileFromDemoUser(demoUser: DemoUser): Profile {
     role: demoUser.role,
     avatar_url: '',
     bio: '',
+    instagram_url: demoUser.instagram_url || '',
+    linkedin_url: demoUser.linkedin_url || '',
+    github_url: demoUser.github_url || '',
     passport_slug: demoUser.username,
     created_at: '',
   };
@@ -123,6 +129,9 @@ function readDemoUser(): DemoUser | null {
         name: parsed.name || parsed.username,
         username: parsed.username,
         email: parsed.email || '',
+        instagram_url: parsed.instagram_url || '',
+        linkedin_url: parsed.linkedin_url || '',
+        github_url: parsed.github_url || '',
         role: storedRole,
       };
     }
@@ -133,7 +142,7 @@ function readDemoUser(): DemoUser | null {
   }
 }
 
-function writeDemoUser(role: UserRole, input?: { name?: string; username?: string; email?: string }) {
+function writeDemoUser(role: UserRole, input?: { name?: string; username?: string; email?: string; instagram_url?: string; linkedin_url?: string; github_url?: string }) {
   const existing = readDemoUser();
   const username = normalizeUsername(input?.username) || existing?.username || nameToUsername(input?.name) || 'eventosuser';
   const name = (input?.name || existing?.name || 'EventOS User').trim();
@@ -142,6 +151,9 @@ function writeDemoUser(role: UserRole, input?: { name?: string; username?: strin
     name,
     username,
     email: input?.email?.trim() || existing?.email || '',
+    instagram_url: input?.instagram_url?.trim() || existing?.instagram_url || '',
+    linkedin_url: input?.linkedin_url?.trim() || existing?.linkedin_url || '',
+    github_url: input?.github_url?.trim() || existing?.github_url || '',
     role,
   };
   const profile = profileFromDemoUser(demoUser);
@@ -174,7 +186,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return profileFromDemoUser(nextDemoUser);
   }, []);
 
-  const loginDemo = useCallback((input?: { name?: string; username?: string; email?: string }) => {
+  const loginDemo = useCallback((input?: { name?: string; username?: string; email?: string; instagram_url?: string; linkedin_url?: string; github_url?: string }) => {
     const nextDemoUser = writeDemoUser('organizer', input);
     setDemoUser(nextDemoUser);
     return profileFromDemoUser(nextDemoUser);

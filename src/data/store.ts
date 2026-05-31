@@ -44,6 +44,10 @@ type DemoUser = {
   id: string;
   name: string;
   username: string;
+  email?: string;
+  instagram_url?: string;
+  linkedin_url?: string;
+  github_url?: string;
   role: Profile['role'];
 };
 
@@ -229,10 +233,13 @@ function profileFromDemoUser(user: DemoUser): Profile {
     id: user.id,
     full_name: user.name,
     username: user.username,
-    email: '',
+    email: user.email || '',
     role: user.role,
     avatar_url: '',
     bio: '',
+    instagram_url: user.instagram_url || '',
+    linkedin_url: user.linkedin_url || '',
+    github_url: user.github_url || '',
     passport_slug: user.username,
     created_at: '',
   };
@@ -269,6 +276,10 @@ export const store = {
       id: user.id,
       name: user.full_name,
       username: user.username,
+      email: user.email,
+      instagram_url: user.instagram_url,
+      linkedin_url: user.linkedin_url,
+      github_url: user.github_url,
       role: user.role,
     }));
     localStorage.removeItem(STORAGE_KEYS.currentUser);

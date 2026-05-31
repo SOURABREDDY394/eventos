@@ -223,8 +223,8 @@ export default function EventDetail() {
       return (
         <div className="text-center">
           <span className={`inline-flex text-xs px-3 py-1 rounded-full border mb-3 ${eventStatusBadgeClass(displayStatus)}`}>Event Ended</span>
-          <p className="text-sm font-semibold text-white mb-2">Registration Closed</p>
-          <p className="text-xs text-white/35 mb-4">Registration is closed because this event has already ended.</p>
+          <p className="text-sm font-black text-[#14150F] mb-2">Registration Closed</p>
+          <p className="text-xs text-[#5E6256] mb-4">Registration is closed because this event has already ended.</p>
           {existingReg && (
             <button onClick={() => navigate('/dashboard/participant/tickets')} className="ghost-btn w-full text-xs rounded-full">
               View My Tickets
@@ -237,11 +237,11 @@ export default function EventDetail() {
     if (!registration) {
       return (
         <>
-          {error && <p className="mb-3 text-xs text-red-400 text-center">{error}</p>}
+          {error && <p className="mb-3 text-xs text-red-600 text-center">{error}</p>}
           <button onClick={handleOpenForm} className="w-full gold-btn mb-3">
             Apply for Event
           </button>
-          <p className="text-[10px] text-center text-white/20">Approval required before ticket issue</p>
+          <p className="text-[10px] text-center text-[#7B845D]">Approval required before ticket issue</p>
         </>
       );
     }
@@ -252,8 +252,8 @@ export default function EventDetail() {
           <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-3">
             <FileText className="w-8 h-8 text-amber-300" />
           </div>
-          <p className="text-sm font-semibold text-amber-300 mb-1">Registration Submitted</p>
-          <p className="text-xs text-white/35 mb-4">Waiting for organizer approval.</p>
+          <p className="text-sm font-black text-[#A06D11] mb-1">Registration Submitted</p>
+          <p className="text-xs text-[#5E6256] mb-4">Waiting for organizer approval.</p>
           <button onClick={() => navigate('/dashboard/participant/tickets')} className="ghost-btn w-full text-xs rounded-full">
             View My Tickets
           </button>
@@ -267,8 +267,8 @@ export default function EventDetail() {
           <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-3">
             <AlertCircle className="w-8 h-8 text-red-300" />
           </div>
-          <p className="text-sm font-semibold text-red-300 mb-1">Registration Rejected</p>
-          <p className="text-xs text-white/35 mb-4">{'rejection_reason' in registration && registration.rejection_reason ? registration.rejection_reason : 'The organizer did not approve this application.'}</p>
+          <p className="text-sm font-black text-red-600 mb-1">Registration Rejected</p>
+          <p className="text-xs text-[#5E6256] mb-4">{'rejection_reason' in registration && registration.rejection_reason ? registration.rejection_reason : 'The organizer did not approve this application.'}</p>
           <button onClick={() => navigate('/dashboard/participant/tickets')} className="ghost-btn w-full text-xs rounded-full">
             View My Tickets
           </button>
@@ -281,11 +281,11 @@ export default function EventDetail() {
         <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-3">
           <CheckCircle className="w-8 h-8 text-emerald-400" />
         </div>
-        <p className="text-sm font-semibold text-emerald-400 mb-1">
+        <p className="text-sm font-black text-emerald-700 mb-1">
           {registration.status === 'attended' ? 'Attendance Verified' : 'Registration Approved'}
         </p>
-        <p className="text-xs text-white/30 mb-3">Your QR ticket is ready.</p>
-        <div className="mono-text text-sm bg-white/5 rounded-lg py-2 px-3 text-[#E49B3A] mb-4">
+        <p className="text-xs text-[#5E6256] mb-3">Your QR ticket is ready.</p>
+        <div className="mono-text text-sm bg-[#F6F3E8] rounded-xl py-2 px-3 text-[#E49B3A] mb-4">
           {'registration_code' in registration ? registration.registration_code : ''}
         </div>
         <button onClick={() => navigate('/dashboard/participant/tickets')} className="ghost-btn w-full text-xs rounded-full">
@@ -314,38 +314,38 @@ export default function EventDetail() {
             <p className="text-sm text-[#5E6256] leading-relaxed mb-6">{event.description}</p>
 
             <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="glass-card rounded-lg p-4">
-                <Calendar className="w-4 h-4 text-[#E49B3A] mb-2" />
-                <p className="text-xs text-white/40">Date</p>
-                <p className="text-sm text-white">{event.date}</p>
+              <div className="rounded-2xl border border-[#E1D8BE] bg-white/80 p-4 shadow-[0_12px_36px_rgba(46,36,16,0.06)]">
+                <Calendar className="w-4 h-4 text-[#52670F] mb-2" />
+                <p className="text-xs text-[#7B845D]">Date</p>
+                <p className="text-sm font-bold text-[#14150F]">{event.date}</p>
               </div>
-              <div className="glass-card rounded-lg p-4">
-                <Clock className="w-4 h-4 text-[#E49B3A] mb-2" />
-                <p className="text-xs text-white/40">Time</p>
-                <p className="text-sm text-white">{event.start_time} - {event.end_time}</p>
+              <div className="rounded-2xl border border-[#E1D8BE] bg-white/80 p-4 shadow-[0_12px_36px_rgba(46,36,16,0.06)]">
+                <Clock className="w-4 h-4 text-[#52670F] mb-2" />
+                <p className="text-xs text-[#7B845D]">Time</p>
+                <p className="text-sm font-bold text-[#14150F]">{event.start_time} - {event.end_time}</p>
               </div>
-              <div className="glass-card rounded-lg p-4">
-                <MapPin className="w-4 h-4 text-[#E49B3A] mb-2" />
-                <p className="text-xs text-white/40">Venue</p>
-                <p className="text-sm text-white">{event.venue}</p>
+              <div className="rounded-2xl border border-[#E1D8BE] bg-white/80 p-4 shadow-[0_12px_36px_rgba(46,36,16,0.06)]">
+                <MapPin className="w-4 h-4 text-[#52670F] mb-2" />
+                <p className="text-xs text-[#7B845D]">Venue</p>
+                <p className="text-sm font-bold text-[#14150F]">{event.venue || 'To be announced'}</p>
               </div>
-              <div className="glass-card rounded-lg p-4">
-                <MapPin className="w-4 h-4 text-[#E49B3A] mb-2" />
-                <p className="text-xs text-white/40">City</p>
-                <p className="text-sm text-white">{event.city}</p>
+              <div className="rounded-2xl border border-[#E1D8BE] bg-white/80 p-4 shadow-[0_12px_36px_rgba(46,36,16,0.06)]">
+                <MapPin className="w-4 h-4 text-[#52670F] mb-2" />
+                <p className="text-xs text-[#7B845D]">City</p>
+                <p className="text-sm font-bold text-[#14150F]">{event.city || 'City TBA'}</p>
               </div>
             </div>
           </div>
 
           <div>
-            <div className="glass-card rounded-xl p-6 sticky top-24">
+            <div className="sticky top-24 rounded-[28px] border border-[#D9D0B8] bg-white/90 p-5 shadow-[0_24px_80px_rgba(46,36,16,0.12)] backdrop-blur-xl">
               {actionMessage && <p className="mb-3 text-xs text-emerald-700 bg-emerald-100 border border-emerald-200 rounded-lg p-3">{actionMessage}</p>}
               {error && <p className="mb-3 text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg p-3">{error}</p>}
               <div className="flex items-center justify-between mb-4">
-                <span className="text-xs text-white/40">Approved Tickets</span>
-                <span className="text-xs text-white/40">{approvedCount} / {event.max_participants}</span>
+                <span className="text-xs font-bold text-[#5E6256]">Approved Tickets</span>
+                <span className="text-xs font-bold text-[#5E6256]">{approvedCount} / {event.max_participants}</span>
               </div>
-              <div className="w-full bg-white/5 rounded-full h-1.5 mb-6">
+              <div className="w-full bg-[#EEF5D9] rounded-full h-2 mb-6 overflow-hidden">
                 <div className="bg-[#E49B3A] h-1.5 rounded-full" style={{ width: `${Math.min((approvedCount / event.max_participants) * 100, 100)}%` }} />
               </div>
 
